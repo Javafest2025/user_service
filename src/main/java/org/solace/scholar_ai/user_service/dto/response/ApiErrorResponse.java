@@ -1,11 +1,10 @@
 package org.solace.scholar_ai.user_service.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.Builder;
-import lombok.Data;
-
 import java.time.LocalDateTime;
 import java.util.List;
+import lombok.Builder;
+import lombok.Data;
 
 /**
  * Standard error response structure for the API.

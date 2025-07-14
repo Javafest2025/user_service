@@ -13,13 +13,39 @@ spring:
       expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000} #7day
 
   datasource:
-    url: jdbc:postgresql://localhost:5433/userDB
+    url: jdbc:postgresql://localhost:${USER_DB_PORT}/userDB
     username: ${USER_DB_USER}
     password: ${USER_DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
       minimum-idle: 3
       maximum-pool-size: 5
+  
+  # Flyway configuration
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    validate-on-migrate: true
+    clean-disabled: false
+    out-of-order: false
+    table: flyway_schema_history
+    baseline-version: 0
+    baseline-description: "Initial baseline"
+    placeholders:
+      uuid_type: UUID
+      uuid_default: DEFAULT gen_random_uuid()
+  
+  # JPA configuration
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        use_sql_comments: true
 
 server:
   port: 8081
@@ -62,8 +88,7 @@ springdoc:
 
 
 cors:
-  allowed-origins:
-    - https://localhost:3000
+  allowed-origins: "https://localhost:3000,https://example.com"
 
 logging:
   level:
