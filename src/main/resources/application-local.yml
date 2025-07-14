@@ -1,0 +1,74 @@
+spring:
+  application:
+    name: user-service
+  security:
+    user:
+      name: ${USER_NAME:your_username_here}
+      password: ${USER_PASSWORD:your_password_here}
+  app:
+    jwtSecret: ${JWT_SECRET:your_jwt_secret_here}
+    access:
+      expiration-ms: ${JWT_ACCESS_EXPIRATION_MS:600000}  # 60,0000 milliseconds = 15 minute
+    refresh:
+      expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000} #7day
+
+  datasource:
+    url: jdbc:postgresql://localhost:5433/userDB
+    username: ${USER_DB_USER}
+    password: ${USER_DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      minimum-idle: 3
+      maximum-pool-size: 5
+
+server:
+  port: 8081
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: never
+    include-exception: false
+
+
+management:
+  info:
+    git:
+      mode: full
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: "${spring.application.name}"
+  tracing:
+    enabled: false
+    sampling:
+      probability: 1
+
+springdoc:
+  api-docs:
+    enabled: true
+  show-actuator: true
+  use-management-port: false
+  swagger-ui:
+    path: /docs
+
+
+cors:
+  allowed-origins:
+    - https://localhost:3000
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.springframework.security: DEBUG
