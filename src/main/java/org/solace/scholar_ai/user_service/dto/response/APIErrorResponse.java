@@ -11,7 +11,7 @@ import lombok.Data;
  */
 @Data
 @Builder
-public class ApiErrorResponse {
+public class APIErrorResponse {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime timestamp;
 

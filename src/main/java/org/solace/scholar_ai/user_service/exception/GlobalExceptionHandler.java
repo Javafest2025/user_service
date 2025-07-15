@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
-import org.solace.scholar_ai.user_service.dto.response.ApiErrorResponse;
+import org.solace.scholar_ai.user_service.dto.response.APIErrorResponse;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -157,7 +157,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             List<String> details) {
         log.error("Exception occurred:", exception);
 
-        ApiErrorResponse errorResponse = ApiErrorResponse.builder()
+        APIErrorResponse errorResponse = APIErrorResponse.builder()
                 .timestamp(java.time.LocalDateTime.now())
                 .status(httpStatus.value())
                 .code(errorCode.name())
