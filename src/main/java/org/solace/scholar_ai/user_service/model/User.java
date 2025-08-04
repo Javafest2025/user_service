@@ -1,5 +1,6 @@
 package org.solace.scholar_ai.user_service.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.List;
@@ -25,8 +26,9 @@ public class User {
     @Column(name = "encrypted_password", nullable = false)
     private String encryptedPassword;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
-    private String role;
+    private UserRole role;
 
     @Column(name = "is_email_confirmed")
     private boolean isEmailConfirmed;
@@ -42,6 +44,7 @@ public class User {
     @Column(name = "updated_at")
     private Instant updatedAt;
 
+    @JsonManagedReference
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private UserProfile profile;
 

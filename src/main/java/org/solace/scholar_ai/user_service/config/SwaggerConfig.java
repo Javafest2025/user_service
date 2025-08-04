@@ -7,90 +7,94 @@ import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
-import io.swagger.v3.oas.models.tags.Tag;
-import org.springdoc.core.models.GroupedOpenApi;
+import io.swagger.v3.oas.models.servers.Server;
+import java.util.List;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Configuration class for Swagger API documentation.
- * Sets up grouped documentation for Actuator and Application APIs with security, tags, and reusable metadata.
+ * Simple configuration for Swagger API documentation with JWT authentication support.
+ * This configuration provides a single unified API documentation with JWT Bearer token authentication.
  */
 @Configuration
 public class SwaggerConfig {
 
-    private static final String ACTUATOR_GROUP = "Actuator API";
-    private static final String APPLICATION_GROUP = "Application API";
-    private static final String ACTUATOR_PATH_PATTERN = "/actuator/**";
-    private static final String APPLICATION_PATH_PATTERN = "/api/**";
-    private static final String API_VERSION = "1.0";
+    /**
+     * JWT Bearer security scheme name.
+     */
+    private static final String JWT_BEARER_SCHEME = "jwtAuth";
+
+    @Value("${server.port:8081}")
+    private String serverPort;
 
     /**
-     * Global reusable OpenAPI metadata (title, contact, license, etc.).
+     * Creates the main OpenAPI configuration with security schemes and global settings.
+     * This includes JWT Bearer token authentication for the entire API.
+     *
+     * @return OpenAPI configuration with JWT security scheme
      */
     @Bean
-    public Info commonApiInfo() {
-        return new Info()
-                .title("ScholarAI User-Service API")
-                .description(
-                        "ScholarAI user-service provides services for authentication authorization, account management, and settings.")
-                .version(API_VERSION)
-                .termsOfService("https://scholarai.dev/terms")
-                .contact(new Contact()
-                        .name("ScholarAI Dev Team")
-                        .url("https://scholarai.dev")
-                        .email("support@scholarai.dev"))
-                .license(new License().name("Apache 2.0").url("https://www.apache.org/licenses/LICENSE-2.0"));
-    }
-
-    /**
-     * OpenAPI component and security scheme configuration (e.g., JWT Bearer token).
-     */
-    @Bean
-    public OpenAPI baseOpenAPI(Info commonApiInfo) {
+    public OpenAPI customOpenAPI() {
         return new OpenAPI()
-                .info(commonApiInfo)
-                .components(new Components()
-                        .addSecuritySchemes(
-                                "bearer-jwt",
-                                new SecurityScheme()
-                                        .type(SecurityScheme.Type.HTTP)
-                                        .scheme("bearer")
-                                        .bearerFormat("JWT")))
-                .addSecurityItem(new SecurityRequirement().addList("bearer-jwt"));
-    }
+                .info(new Info()
+                        .title("ScholarAI User Service API")
+                        .description(
+                                """
+                                ## ScholarAI User Service API Documentation
 
-    /**
-     * Grouped OpenAPI bean for Actuator endpoints.
-     */
-    @Bean
-    public GroupedOpenApi actuatorApi(Info commonApiInfo) {
-        return GroupedOpenApi.builder()
-                .group(ACTUATOR_GROUP)
-                .displayName("🛠 Actuator Monitoring APIs for user-service")
-                .pathsToMatch(ACTUATOR_PATH_PATTERN)
-                .addOpenApiCustomizer(openApi -> {
-                    openApi.info(commonApiInfo);
-                    openApi.addTagsItem(
-                            new Tag().name("Actuator").description("Monitoring, metrics and system health"));
-                })
-                .build();
-    }
+                                This API provides user management and authentication services for ScholarAI platform.
 
-    /**
-     * Grouped OpenAPI bean for ScholarAI application endpoints.
-     */
-    @Bean
-    public GroupedOpenApi applicationApi(Info commonApiInfo) {
-        return GroupedOpenApi.builder()
-                .group(APPLICATION_GROUP)
-                .displayName("📘 ScholarAI user-service APIs")
-                .pathsToMatch(APPLICATION_PATH_PATTERN)
-                .addOpenApiCustomizer(openApi -> {
-                    openApi.info(commonApiInfo);
-                    openApi.addTagsItem(new Tag().name("User").description("User profile and account management"));
-                    openApi.addTagsItem(new Tag().name("Auth").description("Authentication and authorization flows"));
-                })
-                .build();
+                                ### 🔐 Authentication
+                                This API uses JWT Bearer token authentication for protected endpoints. To authenticate:
+
+                                1. **Register** a new account using `/api/v1/auth/register` endpoint
+                                2. **Login** using `/api/v1/auth/login` endpoint to get access and refresh tokens
+                                3. **Click the 'Authorize' button** above and enter your access token in the format: `Bearer <your-access-token>`
+                                4. All protected endpoints will now include the JWT token automatically
+
+                                ### 🔄 Token Management
+                                - **Access tokens** expire in 15 minutes
+                                - **Refresh tokens** are stored in secure HttpOnly cookies and expire in 7 days
+                                - Use `/api/v1/auth/refresh` endpoint to get new access tokens
+
+                                ### 🚀 Quick Start for Developers
+                                1. Register or login to get your JWT tokens
+                                2. Copy the `accessToken` from the login response
+                                3. Click the **🔒 Authorize** button above
+                                4. Enter: `Bearer <your-access-token>`
+                                5. Now you can test all protected endpoints!
+
+                                ### 📋 Public Endpoints (No Authentication Required)
+                                - `POST /api/v1/auth/register` - Register new user
+                                - `POST /api/v1/auth/login` - Login user
+                                - `POST /api/v1/auth/refresh` - Refresh access token
+                                - `POST /api/v1/auth/forgot-password` - Request password reset
+                                - `POST /api/v1/auth/reset-password` - Reset password
+                                - `GET /actuator/**` - Health and monitoring endpoints
+
+                                ### 🔒 Protected Endpoints (JWT Required)
+                                - `POST /api/v1/auth/logout` - Logout user
+                                - All other `/api/**` endpoints
+                                """)
+                        .version("1.0")
+                        .contact(
+                                new Contact().name("ScholarAI Development Team").email("dev@scholarai.com"))
+                        .license(new License().name("MIT License").url("https://opensource.org/licenses/MIT")))
+                .servers(List.of(
+                        new Server().url("http://localhost:" + serverPort).description("Development Server"),
+                        new Server().url("https://api.scholarai.com").description("Production Server")))
+                .components(
+                        new Components()
+                                .addSecuritySchemes(
+                                        JWT_BEARER_SCHEME,
+                                        new SecurityScheme()
+                                                .type(SecurityScheme.Type.HTTP)
+                                                .scheme("bearer")
+                                                .bearerFormat("JWT")
+                                                .name("Authorization")
+                                                .description(
+                                                        "JWT Bearer token authentication. Enter your token in the format: Bearer <token>")))
+                .addSecurityItem(new SecurityRequirement().addList(JWT_BEARER_SCHEME));
     }
 }

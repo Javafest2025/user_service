@@ -1,5 +1,6 @@
 package org.solace.scholar_ai.user_service.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
@@ -18,6 +19,7 @@ public class UserProfile {
     @Column(name = "id")
     private UUID id;
 
+    @JsonBackReference
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;

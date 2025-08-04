@@ -19,7 +19,7 @@ class UserTest {
         user.setId(testId);
         user.setEmail("test@example.com");
         user.setEncryptedPassword("hashedPassword123");
-        user.setRole("STUDENT");
+        user.setRole(UserRole.USER);
         user.setEmailConfirmed(false);
         user.setLastLoginAt(Instant.now());
         user.setCreatedAt(Instant.now());
@@ -32,7 +32,7 @@ class UserTest {
         assertEquals(testId, user.getId());
         assertEquals("test@example.com", user.getEmail());
         assertEquals("hashedPassword123", user.getEncryptedPassword());
-        assertEquals("STUDENT", user.getRole());
+        assertEquals(UserRole.USER, user.getRole());
         assertFalse(user.isEmailConfirmed());
         assertNotNull(user.getLastLoginAt());
         assertNotNull(user.getCreatedAt());
@@ -49,11 +49,11 @@ class UserTest {
     @Test
     void testUserRoleValidation() {
         // Test different roles
-        user.setRole("PROFESSOR");
-        assertEquals("PROFESSOR", user.getRole());
+        user.setRole(UserRole.USER);
+        assertEquals(UserRole.USER, user.getRole());
 
-        user.setRole("ADMIN");
-        assertEquals("ADMIN", user.getRole());
+        user.setRole(UserRole.ADMIN);
+        assertEquals(UserRole.ADMIN, user.getRole());
     }
 
     @Test

@@ -47,6 +47,33 @@ spring:
         format_sql: true
         use_sql_comments: true
 
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD}
+      timeout: 2000
+      database: 0
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER}
+    password: ${RABBITMQ_PASSWORD}
+
+  google:
+    client-id: ${SPRING_GOOGLE_CLIENT_ID}
+    client-secret: ${SPRING_GOOGLE_CLIENT_SECRET}
+  github:
+    client-id: ${SPRING_GITHUB_CLIENT_ID}
+    client-secret: ${SPRING_GITHUB_CLIENT_SECRET}
+    redirect-uri: http://localhost:3000/callback
+
 server:
   port: 8081
   error:
@@ -85,6 +112,24 @@ springdoc:
   use-management-port: false
   swagger-ui:
     path: /docs
+    # Enable authorization persistence in browser
+    persistAuthorization: true
+    # Enable deep linking for swagger operations
+    deepLinking: true
+    # Display request duration in swagger UI
+    displayRequestDuration: true
+    # Enable filtering of operations
+    filter: true
+    # Show common extensions
+    showExtensions: true
+    # Sort operations alphabetically
+    operationsSorter: alpha
+    # Sort tags alphabetically
+    tagsSorter: alpha
+    # Enable try it out by default
+    tryItOutEnabled: true
+    # Custom configuration
+    disable-swagger-default-url: true
 
 
 cors:
