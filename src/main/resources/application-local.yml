@@ -1,6 +1,10 @@
 spring:
   application:
     name: user-service
+  cloud:
+    discovery:
+      enabled: true
+
   security:
     user:
       name: ${USER_NAME:your_username_here}
@@ -65,6 +69,13 @@ spring:
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USER}
     password: ${RABBITMQ_PASSWORD}
+    notification:
+      queue:
+        name: notification-queue
+      exchange:
+        name: notification-exchange
+      routing:
+        key: notification.#
 
   google:
     client-id: ${SPRING_GOOGLE_CLIENT_ID}
@@ -81,6 +92,15 @@ server:
     include-binding-errors: always
     include-stacktrace: never
     include-exception: false
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    hostname: localhost
 
 
 management:
@@ -128,8 +148,6 @@ springdoc:
     tagsSorter: alpha
     # Enable try it out by default
     tryItOutEnabled: true
-    # Custom configuration
-    disable-swagger-default-url: true
 
 
 cors:
@@ -142,3 +160,10 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
     org.springframework.security: DEBUG
+
+    # quiet only Eureka-related logs
+    com.netflix.discovery: WARN
+    com.netflix.eureka: WARN
+    org.springframework.cloud.netflix.eureka: WARN
+    org.springframework.cloud.client.discovery: INFO
+

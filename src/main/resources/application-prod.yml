@@ -1,6 +1,28 @@
 spring:
   application:
     name: user-service
+  cloud:
+    discovery:
+      enabled: true
+    inetutils:
+      preferred-networks: 127.0.0.1
+      ignored-interfaces: ".*"
+  eureka:
+    client:
+      service-url:
+        defaultZone: http://localhost:8761/eureka/
+      register-with-eureka: true
+      fetch-registry: true
+    instance:
+      prefer-ip-address: true
+      hostname: localhost
+      ip-address: 127.0.0.1
+      instance-id: ${spring.application.name}:${server.port}
+      appname: ${spring.application.name}
+      secure-port-enabled: false
+      non-secure-port-enabled: true
+      lease-renewal-interval-in-seconds: 30
+      lease-expiration-duration-in-seconds: 90
   security:
     user:
       name: ${USER_NAME}

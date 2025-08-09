@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.solace.scholar_ai.user_service.dto.auth.AuthResponse;
+import org.solace.scholar_ai.user_service.dto.auth.EmailConfirmationStatusDTO;
 import org.solace.scholar_ai.user_service.model.User;
 import org.solace.scholar_ai.user_service.model.UserProfile;
 import org.solace.scholar_ai.user_service.model.UserRole;
@@ -12,6 +13,7 @@ import org.solace.scholar_ai.user_service.repository.UserIdentityProviderReposit
 import org.solace.scholar_ai.user_service.repository.UserProfileRepository;
 import org.solace.scholar_ai.user_service.repository.UserRepository;
 import org.solace.scholar_ai.user_service.security.JwtUtils;
+import org.solace.scholar_ai.user_service.service.notification.NotificationService;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -35,6 +37,7 @@ public class AuthService {
     private final JwtUtils jwtUtils;
     private final RefreshTokenService refreshTokenService;
     private final RedisTemplate<String, String> redisTemplate;
+    private final NotificationService notificationService;
 
     public Authentication authentication(String email, String password) {
         UserDetails userDetails = userLoadingService.loadUserByUsername(email);
@@ -76,6 +79,15 @@ public class AuthService {
         userProfile.setUpdatedAt(Instant.now());
 
         userProfileRepository.save(userProfile);
+
+        // Send email verification with OTP
+        try {
+            String verificationCode = generateVerificationCode(email);
+            notificationService.sendEmailVerificationEmail(email, email.split("@")[0], verificationCode);
+        } catch (Exception e) {
+            // Log error but don't fail registration
+            // In production, you might want to implement retry logic
+        }
     }
 
     // login registered user
@@ -94,8 +106,8 @@ public class AuthService {
                     + " is already registered via Google/Github login. Please use social auth to continue.");
         }
 
-        User user =
-                userRepository.findByEmail(email).orElseThrow(() -> new BadCredentialsException("Invalid email ..."));
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BadCredentialsException("Invalid email ..."));
 
         List<String> roles = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
@@ -120,8 +132,8 @@ public class AuthService {
         String newRefreshToken = refreshToken;
         refreshTokenService.saveRefreshToken(username, newRefreshToken);
 
-        User user =
-                userRepository.findByEmail(username).orElseThrow(() -> new BadCredentialsException("Invalid Email..."));
+        User user = userRepository.findByEmail(username)
+                .orElseThrow(() -> new BadCredentialsException("Invalid Email..."));
 
         List<String> roles = userLoadingService.loadUserByUsername(username).getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
@@ -135,8 +147,7 @@ public class AuthService {
         refreshTokenService.deleteRefreshToken(username);
     }
 
-    // Forgot Password: generate and store reset code (email service will be handled
-    // by notification service later)
+    // Forgot Password: generate and store reset code
     public String generateResetCode(String email) {
         User user = userRepository
                 .findByEmail(email)
@@ -146,9 +157,15 @@ public class AuthService {
         String redisKey = "RESET_CODE:" + email;
         redisTemplate.opsForValue().set(redisKey, code, Duration.ofMinutes(10)); // expires in 10 min
 
-        // TODO: This will be handled by notification service later
-        // For now, return the code so it can be used for testing
-        return code;
+        // Send password reset email via notification service
+        try {
+            notificationService.sendPasswordResetEmail(email, email.split("@")[0], code);
+        } catch (Exception e) {
+            // Log error but don't fail the operation
+            // In production, you might want to implement retry logic
+        }
+
+        return code; // Still return for testing purposes
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -172,5 +189,96 @@ public class AuthService {
 
         redisTemplate.delete(redisKey); // invalidate used code
         refreshTokenService.deleteRefreshToken(email);
+    }
+
+    // Generate email verification code
+    public String generateVerificationCode(String email) {
+        User user = userRepository
+                .findByEmail(email)
+                .orElseThrow(() -> new BadCredentialsException("No user with that email."));
+
+        if (user.isEmailConfirmed()) {
+            throw new IllegalArgumentException("Email is already confirmed");
+        }
+
+        String code = String.valueOf((int) ((Math.random() * 900000) + 100000)); // 6-digit code
+        String redisKey = "VERIFICATION_CODE:" + email;
+        redisTemplate.opsForValue().set(redisKey, code, Duration.ofMinutes(10)); // expires in 10 min
+
+        return code;
+    }
+
+    // Confirm email with OTP
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void confirmEmail(String email, String otp) {
+        String redisKey = "VERIFICATION_CODE:" + email;
+        String storedCode = redisTemplate.opsForValue().get(redisKey);
+
+        if (storedCode == null || !storedCode.equals(otp)) {
+            throw new IllegalArgumentException("Invalid or expired verification code");
+        }
+
+        User user = userRepository
+                .findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found by this email!"));
+
+        if (user.isEmailConfirmed()) {
+            throw new IllegalArgumentException("Email is already confirmed");
+        }
+
+        user.setEmailConfirmed(true);
+        user.setUpdatedAt(Instant.now());
+        userRepository.saveAndFlush(user);
+
+        redisTemplate.delete(redisKey); // invalidate used code
+
+        // Send welcome email after confirmation
+        try {
+            notificationService.sendWelcomeEmail(email, email.split("@")[0]);
+        } catch (Exception e) {
+            // Log error but don't fail confirmation
+        }
+    }
+
+    // Resend email verification
+    public void resendEmailVerification(String email) {
+        User user = userRepository
+                .findByEmail(email)
+                .orElseThrow(() -> new BadCredentialsException("No user with that email."));
+
+        if (user.isEmailConfirmed()) {
+            throw new IllegalArgumentException("Email is already confirmed");
+        }
+
+        String verificationCode = generateVerificationCode(email);
+        notificationService.sendEmailVerificationEmail(email, email.split("@")[0], verificationCode);
+    }
+
+    // Check email confirmation status
+    public EmailConfirmationStatusDTO checkEmailConfirmationStatus(String email) {
+        return userRepository
+                .findByEmail(email)
+                .map(user -> EmailConfirmationStatusDTO.builder()
+                        .email(email)
+                        .isEmailConfirmed(user.isEmailConfirmed())
+                        .userExists(true)
+                        .build())
+                .orElse(EmailConfirmationStatusDTO.builder()
+                        .email(email)
+                        .isEmailConfirmed(false)
+                        .userExists(false)
+                        .build());
+    }
+
+    // Check if email is available for registration
+    public boolean isEmailAvailable(String email) {
+        // Check if email exists in users table
+        boolean existsInUsers = userRepository.findByEmail(email).isPresent();
+
+        // Check if email exists in social users table
+        boolean existsInSocialUsers = userIdentityProviderRepository.findByUserEmail(email).isPresent();
+
+        // Email is available if it doesn't exist in either table
+        return !existsInUsers && !existsInSocialUsers;
     }
 }
