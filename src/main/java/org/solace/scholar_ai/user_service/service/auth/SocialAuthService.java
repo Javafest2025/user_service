@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.solace.scholar_ai.user_service.dto.auth.AuthResponse;
 import org.solace.scholar_ai.user_service.dto.auth.providers.GitHubEmailDTO;
 import org.solace.scholar_ai.user_service.dto.auth.providers.GitHubUserDTO;
@@ -18,6 +20,7 @@ import org.solace.scholar_ai.user_service.repository.UserProfileRepository;
 import org.solace.scholar_ai.user_service.repository.UserRepository;
 import org.solace.scholar_ai.user_service.security.GoogleVerifierUtil;
 import org.solace.scholar_ai.user_service.security.JwtUtils;
+import org.solace.scholar_ai.user_service.service.notification.NotificationService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -34,6 +37,7 @@ import org.springframework.web.client.RestTemplate;
 @Service
 @RequiredArgsConstructor
 public class SocialAuthService {
+    private static final Logger logger = LoggerFactory.getLogger(SocialAuthService.class);
     private final JwtUtils jwtUtils;
     private final RefreshTokenService refreshTokenService;
     private final UserIdentityProviderRepository userIdentityProviderRepository;
@@ -42,6 +46,7 @@ public class SocialAuthService {
     private final RestTemplate restTemplate;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final NotificationService notificationService;
 
     @Value("${spring.github.client-id}")
     private String githubClientId;
@@ -120,6 +125,17 @@ public class SocialAuthService {
         userProfile.setUpdatedAt(Instant.now());
         userProfileRepository.save(userProfile);
 
+        // Send welcome notification for new user
+        try {
+            String userName = name != null && !name.isEmpty() ? name : email.split("@")[0];
+            notificationService.sendWelcomeEmail(email, userName);
+            logger.info("Welcome notification sent successfully for new Google user: {}", email);
+        } catch (Exception e) {
+            // Log error but don't fail the registration process
+            // In production, you might want to implement retry logic
+            logger.error("Failed to send welcome notification for new Google user: {}", email, e);
+        }
+
         // Generate tokens
         String accessToken = jwtUtils.generateAccessToken(savedUser.getEmail());
         String refreshToken = jwtUtils.generateRefreshToken(savedUser.getEmail());
@@ -197,6 +213,17 @@ public class SocialAuthService {
         userProfile.setUpdatedAt(Instant.now());
         userProfileRepository.save(userProfile);
 
+        // Send welcome notification for new user
+        try {
+            String userName = name != null && !name.isEmpty() ? name : email.split("@")[0];
+            notificationService.sendWelcomeEmail(email, userName);
+            logger.info("Welcome notification sent successfully for new GitHub user: {}", email);
+        } catch (Exception e) {
+            // Log error but don't fail the registration process
+            // In production, you might want to implement retry logic
+            logger.error("Failed to send welcome notification for new GitHub user: {}", email, e);
+        }
+
         // Generate tokens
         String jwtAccessToken = jwtUtils.generateAccessToken(savedUser.getEmail());
         String jwtRefreshToken = jwtUtils.generateRefreshToken(savedUser.getEmail());
@@ -225,8 +252,8 @@ public class SocialAuthService {
         if (response.getBody() == null || !response.getBody().containsKey("access_token")) {
             // Log the error response from GitHub if available
             if (response.getBody() != null && response.getBody().containsKey("error_description")) {
-                System.err.println(
-                        "GitHub token exchange failed: " + response.getBody().get("error_description"));
+                logger.error(
+                        "GitHub token exchange failed: {}", response.getBody().get("error_description"));
             }
             throw new IllegalStateException("Failed to get access token from GitHub");
         }
