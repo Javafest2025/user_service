@@ -167,3 +167,16 @@ logging:
     org.springframework.cloud.netflix.eureka: WARN
     org.springframework.cloud.client.discovery: INFO
 
+# Backblaze B2 Configuration
+b2:
+  endpoint: ${B2_ENDPOINT:https://s3.ams5.backblazeb2.com}
+  key:
+    id: ${B2_KEY_ID:}
+  application:
+    key: ${B2_APPLICATION_KEY:}
+  bucket:
+    name: ${B2_BUCKET_NAME:}
+  public:
+    cdn:
+      base: ${PUBLIC_CDN_BASE:https://scholarai-papers.s3.ams5.backblazeb2.com}
+

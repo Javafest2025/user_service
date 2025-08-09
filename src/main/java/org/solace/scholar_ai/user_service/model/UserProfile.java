@@ -30,6 +30,15 @@ public class UserProfile {
     @Column(name = "avatar_url")
     private String avatarUrl;
 
+    @Column(name = "avatar_key")
+    private String avatarKey;
+
+    @Column(name = "avatar_etag")
+    private String avatarEtag;
+
+    @Column(name = "avatar_updated_at")
+    private Instant avatarUpdatedAt;
+
     @Column(name = "phone_number")
     private String phoneNumber;
 

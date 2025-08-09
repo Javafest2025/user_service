@@ -106,8 +106,8 @@ public class AuthService {
                     + " is already registered via Google/Github login. Please use social auth to continue.");
         }
 
-        User user =
-                userRepository.findByEmail(email).orElseThrow(() -> new BadCredentialsException("Invalid email ..."));
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BadCredentialsException("Invalid email ..."));
 
         List<String> roles = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
@@ -118,22 +118,29 @@ public class AuthService {
 
     // refresh access token when access token expires
     public AuthResponse refreshToken(String refreshToken) {
+        if (refreshToken == null || refreshToken.trim().isEmpty()) {
+            throw new BadCredentialsException("Refresh token is null or empty");
+        }
+
         if (!jwtUtils.validateJwtToken(refreshToken)) {
-            throw new BadCredentialsException("Invalid refresh token");
+            throw new BadCredentialsException("Invalid refresh token - JWT validation failed");
         }
 
         String username = jwtUtils.getUserNameFromJwtToken(refreshToken);
+        if (username == null || username.trim().isEmpty()) {
+            throw new BadCredentialsException("Invalid refresh token - username extraction failed");
+        }
 
         if (!refreshTokenService.isRefreshTokenValid(username, refreshToken)) {
-            throw new BadCredentialsException("Refresh token is not recognized");
+            throw new BadCredentialsException("Refresh token is not recognized or has expired");
         }
 
         String newAccessToken = jwtUtils.generateAccessToken(username);
         String newRefreshToken = refreshToken;
         refreshTokenService.saveRefreshToken(username, newRefreshToken);
 
-        User user =
-                userRepository.findByEmail(username).orElseThrow(() -> new BadCredentialsException("Invalid Email..."));
+        User user = userRepository.findByEmail(username)
+                .orElseThrow(() -> new BadCredentialsException("Invalid Email..."));
 
         List<String> roles = userLoadingService.loadUserByUsername(username).getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
@@ -276,8 +283,7 @@ public class AuthService {
         boolean existsInUsers = userRepository.findByEmail(email).isPresent();
 
         // Check if email exists in social users table
-        boolean existsInSocialUsers =
-                userIdentityProviderRepository.findByUserEmail(email).isPresent();
+        boolean existsInSocialUsers = userIdentityProviderRepository.findByUserEmail(email).isPresent();
 
         // Email is available if it doesn't exist in either table
         return !existsInUsers && !existsInSocialUsers;
