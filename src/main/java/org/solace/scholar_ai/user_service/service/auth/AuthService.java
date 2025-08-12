@@ -106,8 +106,8 @@ public class AuthService {
                     + " is already registered via Google/Github login. Please use social auth to continue.");
         }
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new BadCredentialsException("Invalid email ..."));
+        User user =
+                userRepository.findByEmail(email).orElseThrow(() -> new BadCredentialsException("Invalid email ..."));
 
         List<String> roles = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
@@ -139,8 +139,8 @@ public class AuthService {
         String newRefreshToken = refreshToken;
         refreshTokenService.saveRefreshToken(username, newRefreshToken);
 
-        User user = userRepository.findByEmail(username)
-                .orElseThrow(() -> new BadCredentialsException("Invalid Email..."));
+        User user =
+                userRepository.findByEmail(username).orElseThrow(() -> new BadCredentialsException("Invalid Email..."));
 
         List<String> roles = userLoadingService.loadUserByUsername(username).getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
@@ -283,7 +283,8 @@ public class AuthService {
         boolean existsInUsers = userRepository.findByEmail(email).isPresent();
 
         // Check if email exists in social users table
-        boolean existsInSocialUsers = userIdentityProviderRepository.findByUserEmail(email).isPresent();
+        boolean existsInSocialUsers =
+                userIdentityProviderRepository.findByUserEmail(email).isPresent();
 
         // Email is available if it doesn't exist in either table
         return !existsInUsers && !existsInSocialUsers;

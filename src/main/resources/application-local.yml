@@ -25,25 +25,25 @@ spring:
       minimum-idle: 3
       maximum-pool-size: 5
   
-  # Flyway configuration
+  # Flyway configuration - Disabled for development efficiency
   flyway:
-    enabled: true
-    locations: classpath:db/migration
-    baseline-on-migrate: true
-    validate-on-migrate: true
-    clean-disabled: false
-    out-of-order: false
-    table: flyway_schema_history
-    baseline-version: 0
-    baseline-description: "Initial baseline"
-    placeholders:
-      uuid_type: UUID
-      uuid_default: DEFAULT gen_random_uuid()
+    enabled: false
+    # locations: classpath:db/migration
+    # baseline-on-migrate: true
+    # validate-on-migrate: true
+    # clean-disabled: false
+    # out-of-order: false
+    # table: flyway_schema_history
+    # baseline-version: 0
+    # baseline-description: "Initial baseline"
+    # placeholders:
+    #   uuid_type: UUID
+    #   uuid_default: DEFAULT gen_random_uuid()
   
   # JPA configuration
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update  # Changed from validate to update for development
     show-sql: true
     properties:
       hibernate:

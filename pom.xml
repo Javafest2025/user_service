@@ -132,7 +132,8 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- Database Migration-->
+		<!-- Database Migration - Commented out for development efficiency -->
+		<!--
 		<dependency>
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-core</artifactId>
@@ -143,6 +144,7 @@
 			<version>${flyway.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		-->
 
 		<!-- Configuration -->
 		<dependency>

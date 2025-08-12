@@ -29,8 +29,11 @@ public class RedisConfig {
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
-        logger.info("Configuring Redis connection factory with host: {}, port: {}, database: {}",
-                redisHost, redisPort, redisDatabase);
+        logger.info(
+                "Configuring Redis connection factory with host: {}, port: {}, database: {}",
+                redisHost,
+                redisPort,
+                redisDatabase);
 
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
         config.setHostName(redisHost);
