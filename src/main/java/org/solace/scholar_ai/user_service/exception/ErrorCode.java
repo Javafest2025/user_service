@@ -16,6 +16,7 @@ public enum ErrorCode {
     MALFORMED_JSON("Please verify the JSON syntax and data types in your request."),
     INVALID_ARGUMENT("Please check the argument values against the API specifications."),
     UNSUPPORTED_MEDIA_TYPE("Please use one of the supported media types for this endpoint."),
+    FILE_TOO_LARGE("Please choose a smaller file that meets the size requirements."),
     // Authentication & Authorization Errors
     ACCESS_DENIED("Please ensure you have the necessary permissions or authenticate properly."),
     // Resource & Method Errors

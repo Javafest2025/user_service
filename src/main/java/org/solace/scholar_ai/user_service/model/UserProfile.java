@@ -31,10 +31,10 @@ public class UserProfile {
     private String avatarUrl;
 
     @Column(name = "avatar_key")
-    private String avatarKey;
+    private String avatarKey; // stores Cloudinary public_id
 
     @Column(name = "avatar_etag")
-    private String avatarEtag;
+    private String avatarEtag; // unused with Cloudinary, retained for compatibility
 
     @Column(name = "avatar_updated_at")
     private Instant avatarUpdatedAt;

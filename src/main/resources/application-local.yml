@@ -85,6 +85,12 @@ spring:
     client-secret: ${SPRING_GITHUB_CLIENT_SECRET}
     redirect-uri: http://localhost:3000/callback
 
+  servlet:
+    multipart:
+      max-file-size: 3MB
+      max-request-size: 5MB
+      enabled: true
+
 server:
   port: 8081
   error:
@@ -167,16 +173,6 @@ logging:
     org.springframework.cloud.netflix.eureka: WARN
     org.springframework.cloud.client.discovery: INFO
 
-# Backblaze B2 Configuration
-b2:
-  endpoint: ${B2_ENDPOINT:https://s3.ams5.backblazeb2.com}
-  key:
-    id: ${B2_KEY_ID:}
-  application:
-    key: ${B2_APPLICATION_KEY:}
-  bucket:
-    name: ${B2_BUCKET_NAME:}
-  public:
-    cdn:
-      base: ${PUBLIC_CDN_BASE:https://scholarai-papers.s3.ams5.backblazeb2.com}
+cloudinary:
+  cloudinary-url: ${CLOUDINARY_URL:cloudinary://your_cloud_name:your_api_key:your_api_secret@your_cloud_name}
 

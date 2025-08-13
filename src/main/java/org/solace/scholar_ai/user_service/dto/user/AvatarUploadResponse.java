@@ -5,10 +5,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-public class UploadUrlResponse {
-    private String putUrl;
-    private String key;
-    private String publicUrl;
+@AllArgsConstructor
+public class AvatarUploadResponse {
+    private String url;
+    private String publicId;
 }
