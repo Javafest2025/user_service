@@ -44,28 +44,28 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                        // Swagger/OpenAPI documentation endpoints
-                        .requestMatchers(
-                                "/docs",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/v3/api-docs/**",
-                                "/v3/api-docs.yaml",
-                                "/swagger-resources/**",
-                                "/webjars/**")
-                        .permitAll()
-                        // Actuator endpoints for monitoring
-                        .requestMatchers("/actuator/**")
-                        .permitAll()
-                        // All authentication endpoints (public)
-                        .requestMatchers("/api/v1/auth/**")
-                        .permitAll()
-                        // Health check endpoints
-                        .requestMatchers("/health", "/health/**")
-                        .permitAll()
-                        // All other requests require authentication
-                        .anyRequest()
-                        .authenticated())
+                // Swagger/OpenAPI documentation endpoints
+                .requestMatchers(
+                        "/docs",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/v3/api-docs/**",
+                        "/v3/api-docs.yaml",
+                        "/swagger-resources/**",
+                        "/webjars/**")
+                .permitAll()
+                // Actuator endpoints for monitoring
+                .requestMatchers("/actuator/**")
+                .permitAll()
+                // All authentication endpoints (public)
+                .requestMatchers("/api/v1/auth/**")
+                .permitAll()
+                // Health check endpoints
+                .requestMatchers("/health", "/health/**")
+                .permitAll()
+                // All other requests require authentication
+                .anyRequest()
+                .authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .headers(

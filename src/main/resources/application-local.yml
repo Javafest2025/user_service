@@ -156,8 +156,7 @@ springdoc:
     tryItOutEnabled: true
 
 
-cors:
-  allowed-origins: "https://localhost:3000,https://example.com"
+
 
 logging:
   level:
