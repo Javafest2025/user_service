@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  user-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: scholar-user-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SERVER_PORT=8081
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://service-registry:8761/eureka/
+      - USER_DB_USER=scholar
+      - USER_DB_PASSWORD=FindSolace@0
+      - REDIS_PASSWORD=FindSolace@0
+      - RABBITMQ_USER=scholar
+      - RABBITMQ_PASSWORD=FindSolace@0
+      - JWT_SECRET=bXlTZWNyZXRLZXlGb3JKV1RBdXRoZW50aWNhdGlvbjEyMzQ1Njc4OTA=
+      - USER_NAME=admin
+      - USER_PASSWORD=admin
+      - SPRING_GOOGLE_CLIENT_ID=${SPRING_GOOGLE_CLIENT_ID}
+      - SPRING_GOOGLE_CLIENT_SECRET=${SPRING_GOOGLE_CLIENT_SECRET}
+      - SPRING_GITHUB_CLIENT_ID=${SPRING_GITHUB_CLIENT_ID}
+      - SPRING_GITHUB_CLIENT_SECRET=${SPRING_GITHUB_CLIENT_SECRET}
+      - CLOUDINARY_URL=cloudinary://api_key:api_secret@cloud_name
+    networks:
+      - scholarai-network
+    restart: unless-stopped
+    # Will connect to existing infrastructure via network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Note: user-postgres is already running from meta/Scripts/docker.sh
+  # This service will connect to the existing user-db container
+
+  # Note: service-registry is already running from the main orchestration
+  # This service will connect to the existing service-registry container
+
+# Volumes are managed by meta/Scripts/docker.sh
+
+networks:
+  scholarai-network:
+    external: true
+    name: docker_scholarai-network
