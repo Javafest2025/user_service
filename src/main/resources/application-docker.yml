@@ -97,4 +97,4 @@ server:
       enabled: true
 
 cloudinary:
-  # Uses CLOUDINARY_URL env var
+  cloudinary-url: ${CLOUDINARY_URL:cloudinary://dummy_api_key:dummy_api_secret@dummy_cloud_name}
