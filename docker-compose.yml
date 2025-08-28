@@ -6,25 +6,37 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: scholar-user-service
+    env_file:
+      - .env
     ports:
       - "8081:8081"
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILE}
       - SERVER_PORT=8081
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://service-registry:8761/eureka/
-      - USER_DB_USER=scholar
-      - USER_DB_PASSWORD=FindSolace@0
-      - REDIS_PASSWORD=FindSolace@0
-      - RABBITMQ_USER=scholar
-      - RABBITMQ_PASSWORD=FindSolace@0
-      - JWT_SECRET=bXlTZWNyZXRLZXlGb3JKV1RBdXRoZW50aWNhdGlvbjEyMzQ1Njc4OTA=
-      - USER_NAME=admin
-      - USER_PASSWORD=admin
+      - USER_DB_PORT=${USER_DB_PORT}
+      - USER_DB_USER=${USER_DB_USER}
+      - USER_DB_PASSWORD=${USER_DB_PASSWORD}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - RABBITMQ_PORT=${RABBITMQ_PORT}
+      - RABBITMQ_USER=${RABBITMQ_USER}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_ACCESS_EXPIRATION_MS=${JWT_ACCESS_EXPIRATION_MS}
+      - JWT_REFRESH_EXPIRATION_MS=${JWT_REFRESH_EXPIRATION_MS}
+      - USER_NAME=${USER_NAME}
+      - USER_PASSWORD=${USER_PASSWORD}
       - SPRING_GOOGLE_CLIENT_ID=${SPRING_GOOGLE_CLIENT_ID}
       - SPRING_GOOGLE_CLIENT_SECRET=${SPRING_GOOGLE_CLIENT_SECRET}
       - SPRING_GITHUB_CLIENT_ID=${SPRING_GITHUB_CLIENT_ID}
       - SPRING_GITHUB_CLIENT_SECRET=${SPRING_GITHUB_CLIENT_SECRET}
-      - CLOUDINARY_URL=cloudinary://api_key:api_secret@cloud_name
+      - B2_ENDPOINT=${B2_ENDPOINT}
+      - B2_KEY_ID=${B2_KEY_ID}
+      - B2_APPLICATION_KEY=${B2_APPLICATION_KEY}
+      - B2_BUCKET_NAME=${B2_BUCKET_NAME}
+      - B2_BUCKET_ID=${B2_BUCKET_ID}
+      - PUBLIC_CDN_BASE=${PUBLIC_CDN_BASE}
     networks:
       - scholarai-network
     restart: unless-stopped
