@@ -40,8 +40,8 @@ spring:
 
   data:
     redis:
-      host: user-redis
-      port: 6379
+      host: ${REDIS_HOST:user-redis}
+      port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD}
       timeout: 2000
       database: 0
@@ -52,8 +52,8 @@ spring:
           min-idle: 0
 
   rabbitmq:
-    host: user-rabbitmq
-    port: 5672
+    host: ${RABBITMQ_HOST:user-rabbitmq}
+    port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USER}
     password: ${RABBITMQ_PASSWORD}
     notification:
@@ -90,11 +90,76 @@ eureka:
 
 server:
   port: 8081
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: never
+    include-exception: false
   servlet:
     multipart:
       max-file-size: 3MB
       max-request-size: 5MB
       enabled: true
+
+management:
+  info:
+    git:
+      mode: full
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: "${spring.application.name}"
+  tracing:
+    enabled: false
+    sampling:
+      probability: 1
+
+springdoc:
+  api-docs:
+    enabled: true
+  show-actuator: true
+  use-management-port: false
+  swagger-ui:
+    path: /docs
+    # Enable authorization persistence in browser
+    persistAuthorization: true
+    # Enable deep linking for swagger operations
+    deepLinking: true
+    # Display request duration in swagger UI
+    displayRequestDuration: true
+    # Enable filtering of operations
+    filter: true
+    # Show common extensions
+    showExtensions: true
+    # Sort operations alphabetically
+    operationsSorter: alpha
+    # Sort tags alphabetically
+    tagsSorter: alpha
+    # Enable try it out by default
+    tryItOutEnabled: true
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.springframework.security: DEBUG
+
+    # quiet only Eureka-related logs
+    com.netflix.discovery: WARN
+    com.netflix.eureka: WARN
+    org.springframework.cloud.netflix.eureka: WARN
+    org.springframework.cloud.client.discovery: INFO
 
 cloudinary:
   cloudinary-url: ${CLOUDINARY_URL:cloudinary://dummy_api_key:dummy_api_secret@dummy_cloud_name}
