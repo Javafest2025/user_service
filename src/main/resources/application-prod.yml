@@ -4,86 +4,103 @@ spring:
   cloud:
     discovery:
       enabled: true
-    inetutils:
-      preferred-networks: 127.0.0.1
-      ignored-interfaces: ".*"
-  eureka:
-    client:
-      service-url:
-        defaultZone: http://localhost:8761/eureka/
-      register-with-eureka: true
-      fetch-registry: true
-    instance:
-      prefer-ip-address: true
-      hostname: localhost
-      ip-address: 127.0.0.1
-      instance-id: ${spring.application.name}:${server.port}
-      appname: ${spring.application.name}
-      secure-port-enabled: false
-      non-secure-port-enabled: true
-      lease-renewal-interval-in-seconds: 30
-      lease-expiration-duration-in-seconds: 90
+
   security:
     user:
-      name: ${USER_NAME}
-      password: ${USER_PASSWORD}
+      name: ${USER_NAME:your_username_here}
+      password: ${USER_PASSWORD:your_password_here}
   app:
-    jwtSecret: ${JWT_SECRET}
+    jwtSecret: ${JWT_SECRET:your_jwt_secret_here}
     access:
       expiration-ms: ${JWT_ACCESS_EXPIRATION_MS:600000}
     refresh:
       expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}
 
   datasource:
-    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: jdbc:postgresql://user-db:5432/userDB
+    username: ${USER_DB_USER}
+    password: ${USER_DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
-      minimum-idle: 5
-      maximum-pool-size: 20
-      connection-timeout: 30000
-      idle-timeout: 600000
-      max-lifetime: 1800000
+      minimum-idle: 3
+      maximum-pool-size: 5
 
-  # Flyway configuration
   flyway:
-    enabled: true
-    locations: classpath:db/migration
-    baseline-on-migrate: true
-    validate-on-migrate: true
-    clean-disabled: true
-    out-of-order: false
-    table: flyway_schema_history
-    baseline-version: 0
-    baseline-description: "Initial baseline"
-    placeholders:
-      uuid_type: UUID
-      uuid_default: DEFAULT gen_random_uuid()
+    enabled: false
 
-  # JPA configuration
   jpa:
     hibernate:
-      ddl-auto: validate
-    show-sql: false
+      ddl-auto: update
+    show-sql: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: false
-        use_sql_comments: false
+        format_sql: true
+        use_sql_comments: true
 
-server:
-  port: ${SERVER_PORT:8081}
-  error:
-    include-message: never
-    include-binding-errors: never
-    include-stacktrace: never
-    include-exception: false
+  data:
+    redis:
+      host: ${REDIS_HOST:user-redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD}
+      timeout: 2000
+      database: 0
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:user-rabbitmq}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER}
+    password: ${RABBITMQ_PASSWORD}
+    notification:
+      queue:
+        name: notification-queue
+      exchange:
+        name: notification-exchange
+      routing:
+        key: notification.#
+
+  google:
+    client-id: ${SPRING_GOOGLE_CLIENT_ID}
+    client-secret: ${SPRING_GOOGLE_CLIENT_SECRET}
+  github:
+    client-id: ${SPRING_GITHUB_CLIENT_ID}
+    client-secret: ${SPRING_GITHUB_CLIENT_SECRET}
+    redirect-uri: http://localhost:3000/callback
+
   servlet:
     multipart:
       max-file-size: 3MB
       max-request-size: 5MB
-      enabled: true
+      enabled: true    
+
+server:
+  port: ${SERVER_PORT:8081}
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: never
+    include-exception: false
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://service-registry:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+    hostname: user-service
+    instance-id: ${spring.application.name}:${server.port}
+    appname: ${spring.application.name}
+    secure-port-enabled: false
+    non-secure-port-enabled: true
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
 
 management:
   info:
@@ -92,11 +109,11 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus,metrics
       base-path: /actuator
   endpoint:
     health:
-      show-details: when-authorized
+      show-details: always
       probes:
         enabled: true
   metrics:
@@ -104,6 +121,8 @@ management:
       application: "${spring.application.name}"
   tracing:
     enabled: false
+    sampling:
+      probability: 1
 
 springdoc:
   api-docs:
@@ -112,13 +131,36 @@ springdoc:
   use-management-port: false
   swagger-ui:
     path: /docs
+    # Enable authorization persistence in browser
+    persistAuthorization: true
+    # Enable deep linking for swagger operations
+    deepLinking: true
+    # Display request duration in swagger UI
+    displayRequestDuration: true
+    # Enable filtering of operations
+    filter: true
+    # Show common extensions
+    showExtensions: true
+    # Sort operations alphabetically
+    operationsSorter: alpha
+    # Sort tags alphabetically
+    tagsSorter: alpha
+    # Enable try it out by default
+    tryItOutEnabled: true
 
 logging:
   level:
-    root: WARN
-    org.springframework.web: WARN
-    org.hibernate.SQL: WARN
-    org.springframework.security: WARN
+    root: INFO
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.springframework.security: DEBUG
+
+    # quiet only Eureka-related logs
+    com.netflix.discovery: WARN
+    com.netflix.eureka: WARN
+    org.springframework.cloud.netflix.eureka: WARN
+    org.springframework.cloud.client.discovery: INFO
 
 cloudinary:
-  # Uses CLOUDINARY_URL from environment
+  cloudinary-url: ${CLOUDINARY_URL:cloudinary://dummy_api_key:dummy_api_secret@dummy_cloud_name}

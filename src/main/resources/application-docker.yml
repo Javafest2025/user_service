@@ -72,6 +72,20 @@ spring:
     client-secret: ${SPRING_GITHUB_CLIENT_SECRET}
     redirect-uri: http://localhost:3000/callback
 
+  servlet:
+    multipart:
+      max-file-size: 3MB
+      max-request-size: 5MB
+      enabled: true    
+
+server:
+  port: ${SERVER_PORT:8081}
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: never
+    include-exception: false
+
 eureka:
   client:
     service-url:
@@ -87,19 +101,6 @@ eureka:
     non-secure-port-enabled: true
     lease-renewal-interval-in-seconds: 30
     lease-expiration-duration-in-seconds: 90
-
-server:
-  port: 8081
-  error:
-    include-message: always
-    include-binding-errors: always
-    include-stacktrace: never
-    include-exception: false
-  servlet:
-    multipart:
-      max-file-size: 3MB
-      max-request-size: 5MB
-      enabled: true
 
 management:
   info:

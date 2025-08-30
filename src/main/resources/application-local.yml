@@ -92,7 +92,7 @@ spring:
       enabled: true
 
 server:
-  port: 8081
+  port: ${SERVER_PORT:8081}
   error:
     include-message: always
     include-binding-errors: always
