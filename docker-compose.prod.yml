@@ -18,7 +18,7 @@ services:
 
     environment:
       # ---- profiles & ports ----
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILE:prod}
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILE:-prod}
       - SERVER_PORT=8081
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://service-registry:8761/eureka/
 
