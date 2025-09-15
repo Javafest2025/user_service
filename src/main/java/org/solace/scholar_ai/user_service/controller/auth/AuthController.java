@@ -11,6 +11,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.HttpHeaders;
+import java.time.Duration;
 import jakarta.validation.Valid;
 import java.security.Principal;
 import lombok.RequiredArgsConstructor;
@@ -145,15 +148,17 @@ public class AuthController {
 
                         logger.info("got auth response from authService for login request");
 
-                        // Create secure HttpOnly cookie for refresh token
-                        Cookie refreshCookie = new Cookie("refreshToken", authResponse.getRefreshToken());
-                        refreshCookie.setHttpOnly(true); // only over https
-                        refreshCookie.setSecure(false); // for local testing
-                        refreshCookie.setPath("/");
-                        refreshCookie.setMaxAge(7 * 24 * 60 * 60);
-                        // Don't set domain to allow cookie to work across different hosts/ports
+                        // Create secure HttpOnly cookie for refresh token using ResponseCookie
+                        ResponseCookie refreshCookie = ResponseCookie
+                                        .from("refreshToken", authResponse.getRefreshToken())
+                                        .httpOnly(false) // Allow JavaScript access for debugging
+                                        .secure(false) // Allow over plain HTTP for development
+                                        .sameSite("None") // Important: cross-origin cookie
+                                        .path("/") // Send for all paths
+                                        .maxAge(Duration.ofDays(7))
+                                        .build();
 
-                        response.addCookie(refreshCookie);
+                        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
                         // Note: Refresh token is stored securely in HttpOnly cookie
                         // For development/testing, you can keep it in response by commenting the next
@@ -259,14 +264,16 @@ public class AuthController {
                         logger.debug("Attempting to refresh token");
                         AuthResponse refreshed = authService.refreshToken(refreshToken);
 
-                        // Set new refresh token in cookie
-                        Cookie refreshCookie = new Cookie("refreshToken", refreshed.getRefreshToken());
-                        refreshCookie.setHttpOnly(true);
-                        refreshCookie.setSecure(false); // for local testing
-                        refreshCookie.setPath("/");
-                        refreshCookie.setMaxAge(7 * 24 * 60 * 60);
-                        // Don't set domain to allow cookie to work across different hosts/ports
-                        response.addCookie(refreshCookie);
+                        // Set new refresh token in cookie using ResponseCookie
+                        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshed.getRefreshToken())
+                                        .httpOnly(false) // Allow JavaScript access for debugging
+                                        .secure(false) // Allow over plain HTTP for development
+                                        .sameSite("None") // Important: cross-origin cookie
+                                        .path("/") // Send for all paths
+                                        .maxAge(Duration.ofDays(7))
+                                        .build();
+
+                        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
                         // Remove refresh token from response body
                         refreshed.setRefreshToken(null);
@@ -319,15 +326,16 @@ public class AuthController {
                         String email = principal.getName();
                         authService.logoutUser(email);
 
-                        // Clear the cookie
-                        Cookie cookie = new Cookie("refreshToken", null);
-                        cookie.setHttpOnly(true);
-                        cookie.setSecure(false);
-                        cookie.setPath("/");
-                        cookie.setMaxAge(0);
-                        // Don't set domain to allow cookie to work across different hosts/ports
+                        // Clear the cookie using ResponseCookie
+                        ResponseCookie clearCookie = ResponseCookie.from("refreshToken", "")
+                                        .httpOnly(false) // Allow JavaScript access for debugging
+                                        .secure(false) // Allow over plain HTTP for development
+                                        .sameSite("None") // Important: cross-origin cookie
+                                        .path("/") // Send for all paths
+                                        .maxAge(Duration.ofSeconds(0)) // Expire immediately
+                                        .build();
 
-                        response.addCookie(cookie);
+                        response.addHeader(HttpHeaders.SET_COOKIE, clearCookie.toString());
 
                         return ResponseEntity.ok(
                                         APIResponse.success(HttpStatus.OK.value(), "Logged out successfully", null));
