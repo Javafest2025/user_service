@@ -115,8 +115,8 @@ public class SocialAuthController {
 
                                 httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
-                                // Nullify the refresh token in the body as it's now in a secure cookie
-                                authResponseFromService.setRefreshToken(null);
+                                // Keep refresh token in response body for frontend to set cookie on its domain
+                                // Don't nullify it - frontend needs it to set cookie on :3000 domain
                         } else {
                                 // This indicates an issue if refresh token rotation/issuance is expected
                                 logger.warn("Refresh token was not provided by authService.loginWithGoogle() for social login.");
@@ -228,7 +228,8 @@ public class SocialAuthController {
                                                 .build();
 
                                 httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
-                                authResponse.setRefreshToken(null); // remove from body
+                                // Keep refresh token in response body for frontend to set cookie on its domain
+                                // Don't remove it - frontend needs it to set cookie on :3000 domain
                         }
 
                         logger.info("cookie set for github auth");

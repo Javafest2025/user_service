@@ -275,8 +275,8 @@ public class AuthController {
 
                         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
-                        // Remove refresh token from response body
-                        refreshed.setRefreshToken(null);
+                        // Keep refresh token in response body for frontend to set cookie on its domain
+                        // Don't remove it - frontend needs it to set cookie on :3000 domain
 
                         logger.info("Token refreshed successfully for user: {}", refreshed.getEmail());
                         return ResponseEntity.ok(
