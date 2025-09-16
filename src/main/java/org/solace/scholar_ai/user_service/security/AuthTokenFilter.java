@@ -65,7 +65,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                 log.debug("Username: {}", username);
 
                 // Check if refresh token still exists in Redis
-                String redisKey = "refresh_token" + username;
+                String redisKey = "refresh_token:" + username;
                 try {
                     Boolean hasKey = redisTemplate.hasKey(redisKey);
                     if (hasKey == null || !hasKey) {
