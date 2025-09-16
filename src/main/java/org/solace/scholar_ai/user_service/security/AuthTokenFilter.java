@@ -92,8 +92,8 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                     }
 
                     UserDetails userDetails = userLoadingService.loadUserByUsername(username);
-                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                            userDetails, null, userDetails.getAuthorities());
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                     log.debug("Roles from JWT: {}", userDetails.getAuthorities());
 
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
@@ -138,8 +138,9 @@ public class AuthTokenFilter extends OncePerRequestFilter {
 
                                     // Proceed with authentication using the username from refresh token
                                     UserDetails userDetails = userLoadingService.loadUserByUsername(username);
-                                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                                            userDetails, null, userDetails.getAuthorities());
+                                    UsernamePasswordAuthenticationToken authentication =
+                                            new UsernamePasswordAuthenticationToken(
+                                                    userDetails, null, userDetails.getAuthorities());
                                     log.debug("Roles from refresh token: {}", userDetails.getAuthorities());
 
                                     authentication.setDetails(
