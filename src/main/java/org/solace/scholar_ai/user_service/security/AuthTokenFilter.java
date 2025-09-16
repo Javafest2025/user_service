@@ -60,37 +60,95 @@ public class AuthTokenFilter extends OncePerRequestFilter {
 
         try {
             String accessToken = parseJwt(request);
-            if (accessToken != null && jwtUtils.validateJwtToken(accessToken)) {
-                String username = jwtUtils.getUserNameFromJwtToken(accessToken);
-                log.debug("Username: {}", username);
+            if (accessToken != null) {
+                // First check if the token is valid
+                if (jwtUtils.validateJwtToken(accessToken)) {
+                    // Token is valid, proceed with normal authentication
+                    String username = jwtUtils.getUserNameFromJwtToken(accessToken);
+                    log.debug("Username: {}", username);
 
-                // Check if refresh token still exists in Redis
-                String redisKey = "refresh_token:" + username;
-                try {
-                    Boolean hasKey = redisTemplate.hasKey(redisKey);
-                    if (hasKey == null || !hasKey) {
+                    // Check if refresh token still exists in Redis
+                    String redisKey = "refresh_token:" + username;
+                    try {
+                        Boolean hasKey = redisTemplate.hasKey(redisKey);
+                        if (hasKey == null || !hasKey) {
+                            log.warn(
+                                    "Access token permitted despite missing refresh token for user '{}' in Redis - token is still valid",
+                                    username);
+                            // Continue with authentication instead of failing
+                            // This allows the system to work even if Redis is down or refresh token expired
+                            // The JWT token itself is still valid and sufficient for authentication
+                        }
+                    } catch (Exception redisException) {
                         log.warn(
-                                "Access token permitted despite missing refresh token for user '{}' in Redis - token is still valid",
-                                username);
-                        // Continue with authentication instead of failing
-                        // This allows the system to work even if Redis is down or refresh token expired
-                        // The JWT token itself is still valid and sufficient for authentication
+                                "Redis connection error for user '{}', proceeding with JWT-only authentication: {}",
+                                username,
+                                redisException.getMessage());
+                        // Continue with authentication if Redis is unavailable
                     }
-                } catch (Exception redisException) {
-                    log.warn(
-                            "Redis connection error for user '{}', proceeding with JWT-only authentication: {}",
-                            username,
-                            redisException.getMessage());
-                    // Continue with authentication if Redis is unavailable
+
+                    UserDetails userDetails = userLoadingService.loadUserByUsername(username);
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    log.debug("Roles from JWT: {}", userDetails.getAuthorities());
+
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                } else {
+                    // Token is invalid/expired, try to refresh it
+                    log.debug("JWT token is invalid/expired, attempting to refresh using refresh token");
+
+                    // Extract refresh token from cookies
+                    String refreshToken = null;
+                    if (request.getCookies() != null) {
+                        for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
+                            if ("refreshToken".equals(cookie.getName())) {
+                                refreshToken = cookie.getValue();
+                                log.debug("Found refresh token in cookie");
+                                break;
+                            }
+                        }
+                    }
+
+                    if (refreshToken != null) {
+                        try {
+                            // Validate refresh token and get username
+                            String username = jwtUtils.getUserNameFromJwtToken(refreshToken);
+                            log.debug("Refresh token username: {}", username);
+
+                            // Check if refresh token exists in Redis
+                            String redisKey = "refresh_token:" + username;
+                            Boolean hasKey = redisTemplate.hasKey(redisKey);
+
+                            if (hasKey != null && hasKey) {
+                                // Refresh token is valid, generate new access token
+                                String newAccessToken = jwtUtils.generateAccessToken(username);
+                                log.debug("Generated new access token for user: {}", username);
+
+                                // Set the new access token in response header for frontend to use
+                                response.setHeader("X-New-Access-Token", newAccessToken);
+
+                                // Proceed with authentication using the username from refresh token
+                                UserDetails userDetails = userLoadingService.loadUserByUsername(username);
+                                UsernamePasswordAuthenticationToken authentication =
+                                        new UsernamePasswordAuthenticationToken(
+                                                userDetails, null, userDetails.getAuthorities());
+                                log.debug("Roles from refresh token: {}", userDetails.getAuthorities());
+
+                                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                                SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                                log.info("Successfully refreshed token for user: {}", username);
+                            } else {
+                                log.warn("Refresh token not found in Redis for user: {}", username);
+                            }
+                        } catch (Exception refreshException) {
+                            log.warn("Failed to refresh token: {}", refreshException.getMessage());
+                        }
+                    } else {
+                        log.debug("No refresh token found in cookies");
+                    }
                 }
-
-                UserDetails userDetails = userLoadingService.loadUserByUsername(username);
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                log.debug("Roles from JWT: {}", userDetails.getAuthorities());
-
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         } catch (Exception e) {
             log.error("Cannot set user authentication: {}", e.getMessage(), e);
