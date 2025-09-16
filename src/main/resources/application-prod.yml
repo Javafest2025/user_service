@@ -70,7 +70,7 @@ spring:
   github:
     client-id: ${SPRING_GITHUB_CLIENT_ID}
     client-secret: ${SPRING_GITHUB_CLIENT_SECRET}
-    redirect-uri: http://localhost:3000/callback
+    redirect-uri: https://scholarai.me/callback
 
   servlet:
     multipart:
