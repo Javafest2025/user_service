@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.security.Principal;
+import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +27,9 @@ import org.solace.scholar_ai.user_service.dto.auth.ResendEmailConfirmationDTO;
 import org.solace.scholar_ai.user_service.dto.auth.SignupDTO;
 import org.solace.scholar_ai.user_service.dto.response.APIResponse;
 import org.solace.scholar_ai.user_service.service.auth.AuthService;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.*;
@@ -46,12 +49,12 @@ public class AuthController {
             summary = "User Registration",
             description =
                     """
-      Register a new user account with email and password.
+                        Register a new user account with email and password.
 
-      **For Swagger Testing:**
-      1. Use this endpoint to create a new account
-      2. Then use the login endpoint to get your JWT tokens
-      """)
+                        **For Swagger Testing:**
+                        1. Use this endpoint to create a new account
+                        2. Then use the login endpoint to get your JWT tokens
+                        """)
     @ApiResponses(
             value = {
                 @ApiResponse(
@@ -65,13 +68,13 @@ public class AuthController {
                                                         name = "Successful Registration",
                                                         value =
                                                                 """
-          {
-            "statusCode": 201,
-            "message": "User registered successfully",
-            "success": true,
-            "data": null
-          }
-          """))),
+                                        {
+                                          "statusCode": 201,
+                                          "message": "User registered successfully",
+                                          "success": true,
+                                          "data": null
+                                        }
+                                        """))),
                 @ApiResponse(
                         responseCode = "400",
                         description = "Registration failed - email might already exist or validation failed",
@@ -83,13 +86,13 @@ public class AuthController {
                                                         name = "Registration Error",
                                                         value =
                                                                 """
-          {
-            "statusCode": 400,
-            "message": "Registration failed: Email already exists",
-            "success": false,
-            "data": null
-          }
-          """)))
+                                        {
+                                          "statusCode": 400,
+                                          "message": "Registration failed: Email already exists",
+                                          "success": false,
+                                          "data": null
+                                        }
+                                        """)))
             })
     @PostMapping("/register")
     public ResponseEntity<APIResponse<String>> register(
@@ -102,12 +105,12 @@ public class AuthController {
                                                             name = "Registration Example",
                                                             value =
                                                                     """
-          {
-            "email": "user@example.com",
-            "password": "securePassword123",
-            "role": "USER"
-          }
-          """)))
+                                        {
+                                          "email": "user@example.com",
+                                          "password": "securePassword123",
+                                          "role": "USER"
+                                        }
+                                        """)))
                     @Valid
                     @RequestBody
                     SignupDTO signupDTO,
@@ -129,19 +132,19 @@ public class AuthController {
             summary = "User Login",
             description =
                     """
-      Authenticate user and get JWT tokens.
+                        Authenticate user and get JWT tokens.
 
-      **For Swagger Testing:**
-      1. Use this endpoint to login
-      2. Copy the `accessToken` from the response
-      3. Click the 🔒 **Authorize** button at the top
-      4. Enter: `Bearer <your-access-token>`
-      5. Now you can test protected endpoints!
+                        **For Swagger Testing:**
+                        1. Use this endpoint to login
+                        2. Copy the `accessToken` from the response
+                        3. Click the 🔒 **Authorize** button at the top
+                        4. Enter: `Bearer <your-access-token>`
+                        5. Now you can test protected endpoints!
 
-      **Response includes:**
-      - `accessToken`: Use this for API authentication (expires in 15 min)
-      - `refreshToken`: Automatically stored in secure cookie (expires in 7 days)
-      """)
+                        **Response includes:**
+                        - `accessToken`: Use this for API authentication (expires in 15 min)
+                        - `refreshToken`: Automatically stored in secure cookie (expires in 7 days)
+                        """)
     @ApiResponses(
             value = {
                 @ApiResponse(
@@ -155,18 +158,18 @@ public class AuthController {
                                                         name = "Successful Login",
                                                         value =
                                                                 """
-          {
-            "statusCode": 200,
-            "message": "Login successful",
-            "success": true,
-            "data": {
-              "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-              "refreshToken": "stored-in-httponly-cookie",
-              "tokenType": "Bearer",
-              "expiresIn": 900
-            }
-          }
-          """))),
+                                        {
+                                          "statusCode": 200,
+                                          "message": "Login successful",
+                                          "success": true,
+                                          "data": {
+                                            "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                                            "refreshToken": "stored-in-httponly-cookie",
+                                            "tokenType": "Bearer",
+                                            "expiresIn": 900
+                                          }
+                                        }
+                                        """))),
                 @ApiResponse(
                         responseCode = "401",
                         description = "Invalid credentials",
@@ -178,13 +181,13 @@ public class AuthController {
                                                         name = "Invalid Credentials",
                                                         value =
                                                                 """
-          {
-            "statusCode": 401,
-            "message": "Invalid email or password",
-            "success": false,
-            "data": null
-          }
-          """))),
+                                        {
+                                          "statusCode": 401,
+                                          "message": "Invalid email or password",
+                                          "success": false,
+                                          "data": null
+                                        }
+                                        """))),
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PostMapping("/login")
@@ -198,11 +201,11 @@ public class AuthController {
                                                             name = "Login Example",
                                                             value =
                                                                     """
-          {
-            "email": "user@example.com",
-            "password": "your-password"
-          }
-          """)))
+                                        {
+                                          "email": "user@example.com",
+                                          "password": "your-password"
+                                        }
+                                        """)))
                     @Valid
                     @RequestBody
                     LoginDTO loginDTO,
@@ -215,14 +218,16 @@ public class AuthController {
 
             logger.info("got auth response from authService for login request");
 
-            // Create secure HttpOnly cookie for refresh token
-            Cookie refreshCookie = new Cookie("refreshToken", authResponse.getRefreshToken());
-            refreshCookie.setHttpOnly(true); // only over https
-            refreshCookie.setSecure(false); // for local testing
-            refreshCookie.setPath("/");
-            refreshCookie.setMaxAge(7 * 24 * 60 * 60);
+            // Create secure HttpOnly cookie for refresh token using ResponseCookie
+            ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", authResponse.getRefreshToken())
+                    .httpOnly(false) // Allow JavaScript access for debugging
+                    .secure(false) // Allow over plain HTTP for development
+                    .sameSite("None") // Important: cross-origin cookie
+                    .path("/") // Send for all paths
+                    .maxAge(Duration.ofDays(7))
+                    .build();
 
-            response.addCookie(refreshCookie);
+            response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
             // Note: Refresh token is stored securely in HttpOnly cookie
             // For development/testing, you can keep it in response by commenting the next
@@ -247,22 +252,22 @@ public class AuthController {
             summary = "Refresh Access Token",
             description =
                     """
-      Refresh the access token using the refresh token.
+                        Refresh the access token using the refresh token.
 
-      **How it works:**
-      1. First tries to extract refresh token from request body
-      2. If not found in body, extracts from HttpOnly cookie
-      3. Validates and generates new access token
-      4. Updates refresh token in cookie
-      5. Returns new access token in response
+                        **How it works:**
+                        1. First tries to extract refresh token from request body
+                        2. If not found in body, extracts from HttpOnly cookie
+                        3. Validates and generates new access token
+                        4. Updates refresh token in cookie
+                        5. Returns new access token in response
 
-      **Request Body (Optional):**
-      ```json
-      {
-        "refreshToken": "your-refresh-token-here"
-      }
-      ```
-      """)
+                        **Request Body (Optional):**
+                        ```json
+                        {
+                          "refreshToken": "your-refresh-token-here"
+                        }
+                        ```
+                        """)
     @ApiResponses(
             value = {
                 @ApiResponse(
@@ -276,17 +281,17 @@ public class AuthController {
                                                         name = "Token Refreshed",
                                                         value =
                                                                 """
-          {
-            "statusCode": 200,
-            "message": "Token refreshed successfully",
-            "success": true,
-            "data": {
-              "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-              "tokenType": "Bearer",
-              "expiresIn": 900
-            }
-          }
-          """))),
+                                        {
+                                          "statusCode": 200,
+                                          "message": "Token refreshed successfully",
+                                          "success": true,
+                                          "data": {
+                                            "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                                            "tokenType": "Bearer",
+                                            "expiresIn": 900
+                                          }
+                                        }
+                                        """))),
                 @ApiResponse(
                         responseCode = "401",
                         description = "Invalid or missing refresh token",
@@ -298,13 +303,13 @@ public class AuthController {
                                                         name = "Invalid Refresh Token",
                                                         value =
                                                                 """
-          {
-            "statusCode": 401,
-            "message": "Invalid refresh token",
-            "success": false,
-            "data": null
-          }
-          """))),
+                                        {
+                                          "statusCode": 401,
+                                          "message": "Invalid refresh token",
+                                          "success": false,
+                                          "data": null
+                                        }
+                                        """))),
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PostMapping("/refresh")
@@ -318,10 +323,10 @@ public class AuthController {
                                                             name = "Refresh Token Example",
                                                             value =
                                                                     """
-          {
-            "refreshToken": "your-refresh-token-here"
-          }
-          """)))
+                                        {
+                                          "refreshToken": "your-refresh-token-here"
+                                        }
+                                        """)))
                     @RequestBody(required = false)
                     RefreshTokenRequest refreshTokenRequest,
             HttpServletRequest request,
@@ -359,16 +364,19 @@ public class AuthController {
             logger.debug("Attempting to refresh token");
             AuthResponse refreshed = authService.refreshToken(refreshToken);
 
-            // Set new refresh token in cookie
-            Cookie refreshCookie = new Cookie("refreshToken", refreshed.getRefreshToken());
-            refreshCookie.setHttpOnly(true);
-            refreshCookie.setSecure(false); // for local testing
-            refreshCookie.setPath("/");
-            refreshCookie.setMaxAge(7 * 24 * 60 * 60);
-            response.addCookie(refreshCookie);
+            // Set new refresh token in cookie using ResponseCookie
+            ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshed.getRefreshToken())
+                    .httpOnly(false) // Allow JavaScript access for debugging
+                    .secure(false) // Allow over plain HTTP for development
+                    .sameSite("None") // Important: cross-origin cookie
+                    .path("/") // Send for all paths
+                    .maxAge(Duration.ofDays(7))
+                    .build();
 
-            // Remove refresh token from response body
-            refreshed.setRefreshToken(null);
+            response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+
+            // Keep refresh token in response body for frontend to set cookie on its domain
+            // Don't remove it - frontend needs it to set cookie on :3000 domain
 
             logger.info("Token refreshed successfully for user: {}", refreshed.getEmail());
             return ResponseEntity.ok(
@@ -390,13 +398,13 @@ public class AuthController {
             summary = "Logout User",
             description =
                     """
-      Logout user and invalidate tokens.
+                        Logout user and invalidate tokens.
 
-      **What happens:**
-      1. Invalidates the current user's tokens
-      2. Clears the refresh token cookie
-      3. User will need to login again for new tokens
-      """)
+                        **What happens:**
+                        1. Invalidates the current user's tokens
+                        2. Clears the refresh token cookie
+                        3. User will need to login again for new tokens
+                        """)
     @ApiResponses(
             value = {
                 @ApiResponse(
@@ -410,13 +418,13 @@ public class AuthController {
                                                         name = "Logout Success",
                                                         value =
                                                                 """
-          {
-            "statusCode": 200,
-            "message": "Logged out successfully",
-            "success": true,
-            "data": null
-          }
-          """))),
+                                        {
+                                          "statusCode": 200,
+                                          "message": "Logged out successfully",
+                                          "success": true,
+                                          "data": null
+                                        }
+                                        """))),
                 @ApiResponse(responseCode = "401", description = "Unauthorized - invalid or missing token"),
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
@@ -429,14 +437,16 @@ public class AuthController {
             String email = principal.getName();
             authService.logoutUser(email);
 
-            // Clear the cookie
-            Cookie cookie = new Cookie("refreshToken", null);
-            cookie.setHttpOnly(true);
-            cookie.setSecure(false);
-            cookie.setPath("/");
-            cookie.setMaxAge(0);
+            // Clear the cookie using ResponseCookie
+            ResponseCookie clearCookie = ResponseCookie.from("refreshToken", "")
+                    .httpOnly(false) // Allow JavaScript access for debugging
+                    .secure(false) // Allow over plain HTTP for development
+                    .sameSite("None") // Important: cross-origin cookie
+                    .path("/") // Send for all paths
+                    .maxAge(Duration.ofSeconds(0)) // Expire immediately
+                    .build();
 
-            response.addCookie(cookie);
+            response.addHeader(HttpHeaders.SET_COOKIE, clearCookie.toString());
 
             return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "Logged out successfully", null));
         } catch (Exception e) {
@@ -450,11 +460,11 @@ public class AuthController {
             summary = "Forgot Password",
             description =
                     """
-      Generate a password reset code for the given email.
+                        Generate a password reset code for the given email.
 
-      **Note:** In production, this code will be sent via email/notification service.
-      For development/testing, the code is returned in the response.
-      """)
+                        **Note:** In production, this code will be sent via email/notification service.
+                        For development/testing, the code is returned in the response.
+                        """)
     @ApiResponses(
             value = {
                 @ApiResponse(
@@ -468,13 +478,13 @@ public class AuthController {
                                                         name = "Reset Code Generated",
                                                         value =
                                                                 """
-          {
-            "statusCode": 200,
-            "message": "Reset code generated successfully. Code: 123456 (This will be sent via notification service later)",
-            "success": true,
-            "data": "123456"
-          }
-          """))),
+                                        {
+                                          "statusCode": 200,
+                                          "message": "Reset code generated successfully. Code: 123456 (This will be sent via notification service later)",
+                                          "success": true,
+                                          "data": "123456"
+                                        }
+                                        """))),
                 @ApiResponse(
                         responseCode = "400",
                         description = "Email not found or invalid",
@@ -486,13 +496,13 @@ public class AuthController {
                                                         name = "Email Not Found",
                                                         value =
                                                                 """
-          {
-            "statusCode": 400,
-            "message": "User not found with email: user@example.com",
-            "success": false,
-            "data": null
-          }
-          """)))
+                                        {
+                                          "statusCode": 400,
+                                          "message": "User not found with email: user@example.com",
+                                          "success": false,
+                                          "data": null
+                                        }
+                                        """)))
             })
     @PostMapping("/forgot-password")
     public ResponseEntity<APIResponse<String>> forgotPassword(
@@ -517,13 +527,13 @@ public class AuthController {
             summary = "Reset Password",
             description =
                     """
-      Reset user password using the reset code and new password.
+                        Reset user password using the reset code and new password.
 
-      **Process:**
-      1. Verify the reset code for the given email
-      2. Update the password if code is valid
-      3. Invalidate the reset code after use
-      """)
+                        **Process:**
+                        1. Verify the reset code for the given email
+                        2. Update the password if code is valid
+                        3. Invalidate the reset code after use
+                        """)
     @ApiResponses(
             value = {
                 @ApiResponse(
@@ -537,13 +547,13 @@ public class AuthController {
                                                         name = "Password Reset Success",
                                                         value =
                                                                 """
-          {
-            "statusCode": 200,
-            "message": "Password reset successfully.",
-            "success": true,
-            "data": null
-          }
-          """))),
+                                        {
+                                          "statusCode": 200,
+                                          "message": "Password reset successfully.",
+                                          "success": true,
+                                          "data": null
+                                        }
+                                        """))),
                 @ApiResponse(
                         responseCode = "400",
                         description = "Invalid reset code or email",
@@ -555,13 +565,13 @@ public class AuthController {
                                                         name = "Invalid Reset Code",
                                                         value =
                                                                 """
-          {
-            "statusCode": 400,
-            "message": "Invalid reset code or code expired",
-            "success": false,
-            "data": null
-          }
-          """)))
+                                        {
+                                          "statusCode": 400,
+                                          "message": "Invalid reset code or code expired",
+                                          "success": false,
+                                          "data": null
+                                        }
+                                        """)))
             })
     @PostMapping("/reset-password")
     public ResponseEntity<APIResponse<String>> resetPassword(
@@ -584,13 +594,13 @@ public class AuthController {
             summary = "Confirm Email",
             description =
                     """
-      Confirm user email using the OTP code sent during registration.
+                        Confirm user email using the OTP code sent during registration.
 
-      **Process:**
-      1. Verify the OTP code for the given email
-      2. Mark email as confirmed if code is valid
-      3. Send welcome email after confirmation
-      """)
+                        **Process:**
+                        1. Verify the OTP code for the given email
+                        2. Mark email as confirmed if code is valid
+                        3. Send welcome email after confirmation
+                        """)
     @ApiResponses(
             value = {
                 @ApiResponse(
@@ -604,13 +614,13 @@ public class AuthController {
                                                         name = "Email Confirmation Success",
                                                         value =
                                                                 """
-          {
-            "statusCode": 200,
-            "message": "Email confirmed successfully. Welcome email sent.",
-            "success": true,
-            "data": null
-          }
-          """))),
+                                        {
+                                          "statusCode": 200,
+                                          "message": "Email confirmed successfully. Welcome email sent.",
+                                          "success": true,
+                                          "data": null
+                                        }
+                                        """))),
                 @ApiResponse(
                         responseCode = "400",
                         description = "Invalid OTP code or email already confirmed",
@@ -622,13 +632,13 @@ public class AuthController {
                                                         name = "Invalid OTP",
                                                         value =
                                                                 """
-          {
-            "statusCode": 400,
-            "message": "Invalid or expired verification code",
-            "success": false,
-            "data": null
-          }
-          """)))
+                                        {
+                                          "statusCode": 400,
+                                          "message": "Invalid or expired verification code",
+                                          "success": false,
+                                          "data": null
+                                        }
+                                        """)))
             })
     @PostMapping("/confirm-email")
     public ResponseEntity<APIResponse<String>> confirmEmail(
@@ -641,11 +651,11 @@ public class AuthController {
                                                             name = "Email Confirmation Example",
                                                             value =
                                                                     """
-          {
-            "email": "user@example.com",
-            "otp": "123456"
-          }
-          """)))
+                                        {
+                                          "email": "user@example.com",
+                                          "otp": "123456"
+                                        }
+                                        """)))
                     @Valid
                     @RequestBody
                     EmailConfirmationDTO emailConfirmationDTO) {
@@ -665,10 +675,10 @@ public class AuthController {
             summary = "Resend Email Verification",
             description =
                     """
-      Resend email verification OTP to the user's email address.
+                        Resend email verification OTP to the user's email address.
 
-      **Use case:** When the original verification email expires or user didn't receive it.
-      """)
+                        **Use case:** When the original verification email expires or user didn't receive it.
+                        """)
     @ApiResponses(
             value = {
                 @ApiResponse(
@@ -682,13 +692,13 @@ public class AuthController {
                                                         name = "Email Resent",
                                                         value =
                                                                 """
-          {
-            "statusCode": 200,
-            "message": "Verification email sent successfully",
-            "success": true,
-            "data": null
-          }
-          """))),
+                                        {
+                                          "statusCode": 200,
+                                          "message": "Verification email sent successfully",
+                                          "success": true,
+                                          "data": null
+                                        }
+                                        """))),
                 @ApiResponse(
                         responseCode = "400",
                         description = "Email not found or already confirmed",
@@ -700,13 +710,13 @@ public class AuthController {
                                                         name = "Email Not Found",
                                                         value =
                                                                 """
-          {
-            "statusCode": 400,
-            "message": "No user with that email",
-            "success": false,
-            "data": null
-          }
-          """)))
+                                        {
+                                          "statusCode": 400,
+                                          "message": "No user with that email",
+                                          "success": false,
+                                          "data": null
+                                        }
+                                        """)))
             })
     @PostMapping("/resend-email-verification")
     public ResponseEntity<APIResponse<String>> resendEmailVerification(
@@ -719,10 +729,10 @@ public class AuthController {
                                                             name = "Resend Verification Example",
                                                             value =
                                                                     """
-          {
-            "email": "user@example.com"
-          }
-          """)))
+                                        {
+                                          "email": "user@example.com"
+                                        }
+                                        """)))
                     @Valid
                     @RequestBody
                     ResendEmailConfirmationDTO resendEmailConfirmationDTO) {
@@ -742,13 +752,13 @@ public class AuthController {
             summary = "Check Email Confirmation Status",
             description =
                     """
-      Check if a user exists and whether their email is confirmed.
+                        Check if a user exists and whether their email is confirmed.
 
-      **Response includes:**
-      - `userExists`: Whether a user with this email exists
-      - `isEmailConfirmed`: Whether the email is confirmed (only if user exists)
-      - `email`: The email address being checked
-      """)
+                        **Response includes:**
+                        - `userExists`: Whether a user with this email exists
+                        - `isEmailConfirmed`: Whether the email is confirmed (only if user exists)
+                        - `email`: The email address being checked
+                        """)
     @ApiResponses(
             value = {
                 @ApiResponse(
@@ -762,17 +772,17 @@ public class AuthController {
                                                         name = "Email Status",
                                                         value =
                                                                 """
-          {
-            "statusCode": 200,
-            "message": "Email status retrieved successfully",
-            "success": true,
-            "data": {
-              "email": "user@example.com",
-              "isEmailConfirmed": true,
-              "userExists": true
-            }
-          }
-          """))),
+                                        {
+                                          "statusCode": 200,
+                                          "message": "Email status retrieved successfully",
+                                          "success": true,
+                                          "data": {
+                                            "email": "user@example.com",
+                                            "isEmailConfirmed": true,
+                                            "userExists": true
+                                          }
+                                        }
+                                        """))),
                 @ApiResponse(
                         responseCode = "400",
                         description = "Invalid email format",
@@ -784,13 +794,13 @@ public class AuthController {
                                                         name = "Invalid Email",
                                                         value =
                                                                 """
-          {
-            "statusCode": 400,
-            "message": "Invalid email format",
-            "success": false,
-            "data": null
-          }
-          """)))
+                                        {
+                                          "statusCode": 400,
+                                          "message": "Invalid email format",
+                                          "success": false,
+                                          "data": null
+                                        }
+                                        """)))
             })
     @GetMapping("/check-email-status")
     public ResponseEntity<APIResponse<EmailConfirmationStatusDTO>> checkEmailStatus(
@@ -818,16 +828,16 @@ public class AuthController {
             summary = "Check Email Availability",
             description =
                     """
-      Check if an email address is available for registration.
+                        Check if an email address is available for registration.
 
-      **Checks both:**
-      - Regular user accounts (users table)
-      - Social login accounts (user_identity_providers table)
+                        **Checks both:**
+                        - Regular user accounts (users table)
+                        - Social login accounts (user_identity_providers table)
 
-      **Response:**
-      - `isAvailable: true` if email can be used for registration
-      - `isAvailable: false` if email is already taken
-      """)
+                        **Response:**
+                        - `isAvailable: true` if email can be used for registration
+                        - `isAvailable: false` if email is already taken
+                        """)
     @ApiResponses(
             value = {
                 @ApiResponse(
@@ -841,16 +851,16 @@ public class AuthController {
                                                         name = "Email Available",
                                                         value =
                                                                 """
-          {
-            "statusCode": 200,
-            "message": "Email availability checked successfully",
-            "success": true,
-            "data": {
-              "email": "newuser@example.com",
-              "isAvailable": true
-            }
-          }
-          """))),
+                                        {
+                                          "statusCode": 200,
+                                          "message": "Email availability checked successfully",
+                                          "success": true,
+                                          "data": {
+                                            "email": "newuser@example.com",
+                                            "isAvailable": true
+                                          }
+                                        }
+                                        """))),
                 @ApiResponse(
                         responseCode = "400",
                         description = "Invalid email format",
@@ -862,13 +872,13 @@ public class AuthController {
                                                         name = "Invalid Email",
                                                         value =
                                                                 """
-          {
-            "statusCode": 400,
-            "message": "Invalid email format",
-            "success": false,
-            "data": null
-          }
-          """)))
+                                        {
+                                          "statusCode": 400,
+                                          "message": "Invalid email format",
+                                          "success": false,
+                                          "data": null
+                                        }
+                                        """)))
             })
     @GetMapping("/check-email-availability")
     public ResponseEntity<APIResponse<EmailAvailabilityDTO>> checkEmailAvailability(

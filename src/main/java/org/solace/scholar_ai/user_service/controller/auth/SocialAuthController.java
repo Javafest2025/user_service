@@ -6,8 +6,8 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import java.time.Duration;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -15,7 +15,9 @@ import org.slf4j.LoggerFactory;
 import org.solace.scholar_ai.user_service.dto.auth.AuthResponse;
 import org.solace.scholar_ai.user_service.dto.response.APIResponse;
 import org.solace.scholar_ai.user_service.service.auth.SocialAuthService;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,21 +37,21 @@ public class SocialAuthController {
             summary = "Google OAuth Login",
             description =
                     """
-            Authenticate user using Google OAuth ID token.
+                        Authenticate user using Google OAuth ID token.
 
-            **How it works:**
-            1. Client obtains Google ID token from Google OAuth flow
-            2. Sends ID token to this endpoint
-            3. Server validates the ID token with Google
-            4. Creates or updates user account
-            5. Returns JWT tokens for API access
+                        **How it works:**
+                        1. Client obtains Google ID token from Google OAuth flow
+                        2. Sends ID token to this endpoint
+                        3. Server validates the ID token with Google
+                        4. Creates or updates user account
+                        5. Returns JWT tokens for API access
 
-            **For Swagger Testing:**
-            1. Use this endpoint with a valid Google ID token
-            2. Copy the `accessToken` from the response
-            3. Click the 🔒 **Authorize** button at the top
-            4. Enter: `Bearer <your-access-token>`
-            """)
+                        **For Swagger Testing:**
+                        1. Use this endpoint with a valid Google ID token
+                        2. Copy the `accessToken` from the response
+                        3. Click the 🔒 **Authorize** button at the top
+                        4. Enter: `Bearer <your-access-token>`
+                        """)
     @ApiResponses(
             value = {
                 @ApiResponse(
@@ -63,17 +65,17 @@ public class SocialAuthController {
                                                         name = "Google Login Success",
                                                         value =
                                                                 """
-                    {
-                      "statusCode": 200,
-                      "message": "Google login successful",
-                      "success": true,
-                      "data": {
-                        "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-                        "tokenType": "Bearer",
-                        "expiresIn": 900
-                      }
-                    }
-                    """))),
+                                        {
+                                          "statusCode": 200,
+                                          "message": "Google login successful",
+                                          "success": true,
+                                          "data": {
+                                            "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                                            "tokenType": "Bearer",
+                                            "expiresIn": 900
+                                          }
+                                        }
+                                        """))),
                 @ApiResponse(
                         responseCode = "400",
                         description = "ID token is missing",
@@ -85,13 +87,13 @@ public class SocialAuthController {
                                                         name = "Missing ID Token",
                                                         value =
                                                                 """
-                    {
-                      "statusCode": 400,
-                      "message": "ID token is missing.",
-                      "success": false,
-                      "data": null
-                    }
-                    """))),
+                                        {
+                                          "statusCode": 400,
+                                          "message": "ID token is missing.",
+                                          "success": false,
+                                          "data": null
+                                        }
+                                        """))),
                 @ApiResponse(
                         responseCode = "401",
                         description = "Invalid Google ID token or authentication failed",
@@ -103,13 +105,13 @@ public class SocialAuthController {
                                                         name = "Invalid ID Token",
                                                         value =
                                                                 """
-                    {
-                      "statusCode": 401,
-                      "message": "Invalid Google ID token: Token validation failed",
-                      "success": false,
-                      "data": null
-                    }
-                    """))),
+                                        {
+                                          "statusCode": 401,
+                                          "message": "Invalid Google ID token: Token validation failed",
+                                          "success": false,
+                                          "data": null
+                                        }
+                                        """))),
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PostMapping("/google-login")
@@ -123,10 +125,10 @@ public class SocialAuthController {
                                                             name = "Google ID Token Example",
                                                             value =
                                                                     """
-                    {
-                      "idToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjEyMzQ1Njc4OTAiLCJ0eXAiOiJKV1QifQ..."
-                    }
-                    """)))
+                                        {
+                                          "idToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjEyMzQ1Njc4OTAiLCJ0eXAiOiJKV1QifQ..."
+                                        }
+                                        """)))
                     @RequestBody
                     Map<String, String> payload,
             HttpServletResponse httpServletResponse) {
@@ -141,18 +143,22 @@ public class SocialAuthController {
 
             AuthResponse authResponseFromService = socialAuthService.loginWithGoogle(idToken);
 
-            // Set the refreshToken as an HttpOnly cookie
+            // Set the refreshToken as an HttpOnly cookie using ResponseCookie
             if (authResponseFromService.getRefreshToken() != null
                     && !authResponseFromService.getRefreshToken().isEmpty()) {
-                Cookie refreshCookie = new Cookie("refreshToken", authResponseFromService.getRefreshToken());
-                refreshCookie.setHttpOnly(true);
-                refreshCookie.setSecure(false); // TODO: Set to true in production (HTTPS)
-                refreshCookie.setPath("/");
-                refreshCookie.setMaxAge(7 * 24 * 60 * 60); // Your refresh token's validity in seconds
-                httpServletResponse.addCookie(refreshCookie);
+                ResponseCookie refreshCookie = ResponseCookie.from(
+                                "refreshToken", authResponseFromService.getRefreshToken())
+                        .httpOnly(false) // Allow JavaScript access for debugging
+                        .secure(false) // Allow over plain HTTP for development
+                        .sameSite("None") // Important: cross-origin cookie
+                        .path("/") // Send for all paths
+                        .maxAge(Duration.ofDays(7))
+                        .build();
 
-                // Nullify the refresh token in the body as it's now in a secure cookie
-                authResponseFromService.setRefreshToken(null);
+                httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+
+                // Keep refresh token in response body for frontend to set cookie on its domain
+                // Don't nullify it - frontend needs it to set cookie on :3000 domain
             } else {
                 // This indicates an issue if refresh token rotation/issuance is expected
                 logger.warn("Refresh token was not provided by authService.loginWithGoogle() for social login.");
@@ -183,22 +189,22 @@ public class SocialAuthController {
             summary = "GitHub OAuth Login",
             description =
                     """
-            Authenticate user using GitHub OAuth authorization code.
+                        Authenticate user using GitHub OAuth authorization code.
 
-            **How it works:**
-            1. Client obtains authorization code from GitHub OAuth flow
-            2. Sends authorization code to this endpoint
-            3. Server exchanges code for GitHub access token
-            4. Fetches user data from GitHub
-            5. Creates or updates user account
-            6. Returns JWT tokens for API access
+                        **How it works:**
+                        1. Client obtains authorization code from GitHub OAuth flow
+                        2. Sends authorization code to this endpoint
+                        3. Server exchanges code for GitHub access token
+                        4. Fetches user data from GitHub
+                        5. Creates or updates user account
+                        6. Returns JWT tokens for API access
 
-            **For Swagger Testing:**
-            1. Use this endpoint with a valid GitHub authorization code
-            2. Copy the `accessToken` from the response
-            3. Click the 🔒 **Authorize** button at the top
-            4. Enter: `Bearer <your-access-token>`
-            """)
+                        **For Swagger Testing:**
+                        1. Use this endpoint with a valid GitHub authorization code
+                        2. Copy the `accessToken` from the response
+                        3. Click the 🔒 **Authorize** button at the top
+                        4. Enter: `Bearer <your-access-token>`
+                        """)
     @ApiResponses(
             value = {
                 @ApiResponse(
@@ -212,17 +218,17 @@ public class SocialAuthController {
                                                         name = "GitHub Login Success",
                                                         value =
                                                                 """
-                    {
-                      "statusCode": 200,
-                      "message": "GitHub login successful",
-                      "success": true,
-                      "data": {
-                        "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-                        "tokenType": "Bearer",
-                        "expiresIn": 900
-                      }
-                    }
-                    """))),
+                                        {
+                                          "statusCode": 200,
+                                          "message": "GitHub login successful",
+                                          "success": true,
+                                          "data": {
+                                            "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                                            "tokenType": "Bearer",
+                                            "expiresIn": 900
+                                          }
+                                        }
+                                        """))),
                 @ApiResponse(
                         responseCode = "400",
                         description = "GitHub authorization code is missing or invalid",
@@ -234,13 +240,13 @@ public class SocialAuthController {
                                                         name = "Missing Authorization Code",
                                                         value =
                                                                 """
-                    {
-                      "statusCode": 400,
-                      "message": "GitHub authorization code is missing",
-                      "success": false,
-                      "data": null
-                    }
-                    """))),
+                                        {
+                                          "statusCode": 400,
+                                          "message": "GitHub authorization code is missing",
+                                          "success": false,
+                                          "data": null
+                                        }
+                                        """))),
                 @ApiResponse(
                         responseCode = "401",
                         description = "GitHub authentication failed",
@@ -252,13 +258,13 @@ public class SocialAuthController {
                                                         name = "GitHub Auth Failed",
                                                         value =
                                                                 """
-                    {
-                      "statusCode": 401,
-                      "message": "GitHub login failed: Invalid authorization code",
-                      "success": false,
-                      "data": null
-                    }
-                    """))),
+                                        {
+                                          "statusCode": 401,
+                                          "message": "GitHub login failed: Invalid authorization code",
+                                          "success": false,
+                                          "data": null
+                                        }
+                                        """))),
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PostMapping("/github-login")
@@ -272,10 +278,10 @@ public class SocialAuthController {
                                                             name = "GitHub Authorization Code Example",
                                                             value =
                                                                     """
-                    {
-                      "code": "abc123def456ghi789"
-                    }
-                    """)))
+                                        {
+                                          "code": "abc123def456ghi789"
+                                        }
+                                        """)))
                     @RequestBody
                     Map<String, String> payload,
             HttpServletResponse httpServletResponse) {
@@ -293,13 +299,17 @@ public class SocialAuthController {
 
             if (authResponse.getRefreshToken() != null
                     && !authResponse.getRefreshToken().isEmpty()) {
-                Cookie refreshCookie = new Cookie("refreshToken", authResponse.getRefreshToken());
-                refreshCookie.setHttpOnly(true);
-                refreshCookie.setSecure(false); // Change to true in production
-                refreshCookie.setPath("/");
-                refreshCookie.setMaxAge(7 * 24 * 60 * 60);
-                httpServletResponse.addCookie(refreshCookie);
-                authResponse.setRefreshToken(null); // remove from body
+                ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", authResponse.getRefreshToken())
+                        .httpOnly(false) // Allow JavaScript access for debugging
+                        .secure(false) // Allow over plain HTTP for development
+                        .sameSite("None") // Important: cross-origin cookie
+                        .path("/") // Send for all paths
+                        .maxAge(Duration.ofDays(7))
+                        .build();
+
+                httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+                // Keep refresh token in response body for frontend to set cookie on its domain
+                // Don't remove it - frontend needs it to set cookie on :3000 domain
             }
 
             logger.info("cookie set for github auth");

@@ -1,0 +1,74 @@
+services:
+  user-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: scholar-user-service
+
+    # 🏷️ Add metadata labels for cleanup & observability
+    labels:
+      service: "user-service"
+      maintainer: "ScholarAI <dev@scholarai.local>"
+      version: "0.0.1-SNAPSHOT"
+      description: "User Service for ScholarAI"
+    env_file:
+      - /opt/scholarai/envs/user-service.env
+    ports:
+      - "8081:8081"
+
+    environment:
+      # ---- profiles & ports ----
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILE:-prod}
+      - SERVER_PORT=8081
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://service-registry:8761/eureka/
+
+      # ---- JVM tuning ----
+      - JAVA_TOOL_OPTIONS=-XX:InitialRAMPercentage=20 -XX:MaxRAMPercentage=60 -XX:+UseStringDeduplication -XX:MaxGCPauseMillis=200 -XX:+ExitOnOutOfMemoryError
+
+      # ---- Spring Boot resource tuning ----
+      - SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE=10
+      - SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE=2
+      - SPRING_JPA_OPEN_IN_VIEW=false
+      - SERVER_TOMCAT_MAX_THREADS=40
+      - SERVER_TOMCAT_MAX_CONNECTIONS=150
+      - SERVER_TOMCAT_ACCEPT_COUNT=40
+      - SPRING_THREADS_VIRTUAL_ENABLED=true
+
+      # ---- Redis client tuning ----
+      - SPRING_REDIS_LETTUCE_POOL_MAX_ACTIVE=16
+      - SPRING_REDIS_LETTUCE_POOL_MAX_IDLE=8
+      - SPRING_REDIS_LETTUCE_POOL_MIN_IDLE=2
+      - SPRING_REDIS_TIMEOUT=3000
+
+      # ---- RabbitMQ listener tuning ----
+      - SPRING_RABBITMQ_LISTENER_SIMPLE_CONCURRENCY=2
+      - SPRING_RABBITMQ_LISTENER_SIMPLE_MAX_CONCURRENCY=4
+      - SPRING_RABBITMQ_LISTENER_SIMPLE_PREFETCH=50
+      - SPRING_RABBITMQ_TEMPLATE_REPLY_TIMEOUT=5000
+
+    networks:
+      - scholarai-network
+    restart: unless-stopped
+
+    # ---- resource caps ----
+    cpus: 0.75
+    mem_limit: 768m
+    mem_reservation: 512m
+    pids_limit: 512
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+
+    # keep your existing healthcheck
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  scholarai-network:
+    external: true
+    name: docker_scholarai-network
