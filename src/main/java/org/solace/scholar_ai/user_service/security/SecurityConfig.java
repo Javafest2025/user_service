@@ -60,6 +60,9 @@ public class SecurityConfig {
                         // All authentication endpoints (public)
                         .requestMatchers("/api/v1/auth/**")
                         .permitAll()
+                        // Internal service-to-service communication endpoints
+                        .requestMatchers("/api/v1/notifications/send")
+                        .permitAll()
                         // Health check endpoints
                         .requestMatchers("/health", "/health/**")
                         .permitAll()
