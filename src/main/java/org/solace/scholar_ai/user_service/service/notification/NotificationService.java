@@ -2,6 +2,7 @@ package org.solace.scholar_ai.user_service.service.notification;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.solace.scholar_ai.user_service.dto.notification.NotificationRequest;
@@ -29,10 +30,14 @@ public class NotificationService {
                 .recipientName(name)
                 .timestamp(Instant.now())
                 .templateData(Map.of(
-                        "userName", name,
-                        "welcomeMessage", "Welcome to ScholarAI! We're excited to have you on board.",
-                        "appName", "ScholarAI",
-                        "supportEmail", "support@scholarai.com"))
+                        "userName",
+                        name,
+                        "welcomeMessage",
+                        "Welcome to ScholarAI! We're excited to have you on board.",
+                        "appName",
+                        "ScholarAI",
+                        "supportEmail",
+                        "support@scholarai.com"))
                 .build();
 
         sendNotification(request);
@@ -94,5 +99,29 @@ public class NotificationService {
             // In a production environment, you might want to implement retry logic or dead
             // letter queue
         }
+    }
+
+    public void sendGenericNotificationToUser(
+            UUID userId,
+            String notificationType,
+            Map<String, Object> templateData,
+            String recipientEmail,
+            String recipientName) {
+        Map<String, Object> data =
+                templateData != null ? new java.util.HashMap<>(templateData) : new java.util.HashMap<>();
+        // Ensure common variables exist
+        data.putIfAbsent("userName", recipientName);
+        data.putIfAbsent("appName", "ScholarAI");
+        data.putIfAbsent("supportEmail", "support@scholarai.com");
+
+        NotificationRequest request = NotificationRequest.builder()
+                .notificationType(notificationType)
+                .recipientEmail(recipientEmail)
+                .recipientName(recipientName)
+                .timestamp(Instant.now())
+                .templateData(data)
+                .userId(userId)
+                .build();
+        sendNotification(request);
     }
 }
